@@ -12,6 +12,24 @@ Application web de gestion de stock pour une boutique artisanale fait main ("Les
 
 ---
 
+## Reprendre le travail (même ordinateur)
+
+Pour relancer le projet après une pause :
+
+```bash
+npm run dev
+```
+
+Ouvrir `http://localhost:3000`. Une fois les modifications terminées, envoyer en ligne :
+
+```bash
+git push origin main
+```
+
+L'application sur `magasin-app.vercel.app` se met à jour automatiquement en 1-2 minutes.
+
+---
+
 ## Réactivation sur un nouvel ordinateur
 
 Si tu reprends ce projet sur une nouvelle machine, voici les étapes dans l'ordre :
