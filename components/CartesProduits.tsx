@@ -7,15 +7,18 @@ import { Package, ChevronDown, ChevronUp, Search, X } from 'lucide-react'
 interface Props {
   produits: any[]
   categories: any[]
+  revendeurs: any[]
+  prixLieu: { produit_id: string; revendeur_id: string; prix_vente: number }[]
 }
 
 function euro(val: number) {
   return val.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
 }
 
-function CarteInfo({ p }: { p: any }) {
+function CarteInfo({ p, prixLieu }: { p: any; prixLieu?: number }) {
   const [ouvert, setOuvert] = useState(false)
-  const marge = p.prix_vente_souhaite - p.prix_revient
+  const prixAffiché = prixLieu ?? p.prix_vente_souhaite
+  const marge = prixAffiché - p.prix_revient
   const margePct = p.prix_revient > 0 ? Math.round((marge / p.prix_revient) * 100) : 0
 
   return (
@@ -45,7 +48,15 @@ function CarteInfo({ p }: { p: any }) {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-          <span className="card-price">{euro(p.prix_vente_souhaite)}</span>
+          <div>
+            <span className="card-price">{euro(prixAffiché)}</span>
+            {prixLieu !== undefined && (
+              <div style={{ fontSize: 10, color: 'var(--color-warning)', fontWeight: 500, marginTop: 1 }}>Prix lieu de vente</div>
+            )}
+            {prixLieu === undefined && (
+              <div style={{ fontSize: 10, color: 'var(--color-text-muted)', marginTop: 1 }}>Prix normal</div>
+            )}
+          </div>
           <span className={`badge ${marge >= 0 ? 'badge-success' : 'badge-danger'}`}>+{margePct}%</span>
         </div>
 
@@ -116,10 +127,11 @@ function CarteInfo({ p }: { p: any }) {
   )
 }
 
-export default function CartesProduits({ produits, categories }: Props) {
+export default function CartesProduits({ produits, categories, revendeurs, prixLieu }: Props) {
   const [catFiltre, setCatFiltre] = useState('')
   const [etatFiltre, setEtatFiltre] = useState('')
   const [recherche, setRecherche] = useState('')
+  const [lieuVue, setLieuVue] = useState('')
 
   const termes = recherche.toLowerCase().trim().split(/\s+/).filter(Boolean)
 
@@ -133,8 +145,47 @@ export default function CartesProduits({ produits, categories }: Props) {
     return true
   })
 
+  function getPrixPourLieu(produitId: string): number | undefined {
+    if (!lieuVue) return undefined
+    const entree = prixLieu.find(pl => pl.produit_id === produitId && pl.revendeur_id === lieuVue)
+    return entree?.prix_vente
+  }
+
+  const lieuActif = revendeurs.find((r: any) => r.id === lieuVue)
+
   return (
     <>
+      {/* Sélecteur de vue par lieu */}
+      {revendeurs.length > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
+          marginBottom: 'var(--space-3)', padding: 'var(--space-3)',
+          background: lieuVue ? 'var(--color-warning-light)' : 'var(--color-surface)',
+          border: `1px solid ${lieuVue ? 'var(--color-warning)' : 'var(--color-border)'}`,
+          borderRadius: 'var(--radius)', flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+            Voir les prix pour :
+          </span>
+          <select
+            className="form-input"
+            style={{ width: 'auto', minWidth: 180, minHeight: 36 }}
+            value={lieuVue}
+            onChange={e => setLieuVue(e.target.value)}
+          >
+            <option value="">Affichage normal</option>
+            {revendeurs.map((r: any) => (
+              <option key={r.id} value={r.id}>{r.nom}</option>
+            ))}
+          </select>
+          {lieuVue && (
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning)', fontStyle: 'italic' }}>
+              Les prix spécifiques à {lieuActif?.nom} sont mis en avant
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Barre de recherche */}
       <div style={{ position: 'relative', marginBottom: 'var(--space-3)' }}>
         <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
@@ -190,7 +241,9 @@ export default function CartesProduits({ produits, categories }: Props) {
         </div>
       ) : (
         <div className="grid-products">
-          {filtres.map((p: any) => <CarteInfo key={p.id} p={p} />)}
+          {filtres.map((p: any) => (
+            <CarteInfo key={p.id} p={p} prixLieu={getPrixPourLieu(p.id)} />
+          ))}
         </div>
       )}
     </>

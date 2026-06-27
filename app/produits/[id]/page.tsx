@@ -7,6 +7,7 @@ import BoutonVente from '@/components/BoutonVente'
 import BoutonAnnulerVente from '@/components/BoutonAnnulerVente'
 import BoutonSupprimerProduit from '@/components/BoutonSupprimerProduit'
 import BoutonDepot from '@/components/BoutonDepot'
+import PrixParLieu from '@/components/PrixParLieu'
 
 async function getProduit(id: string) {
   const { data } = await supabase
@@ -15,6 +16,11 @@ async function getProduit(id: string) {
     .eq('id', id)
     .single()
   return data
+}
+
+async function getPrixLieu(produitId: string) {
+  const { data } = await supabase.from('prix_lieu').select('revendeur_id, prix_vente').eq('produit_id', produitId)
+  return data || []
 }
 
 async function getVentes(produitId: string) {
@@ -37,10 +43,11 @@ function euro(val: number) {
 }
 
 export default async function FicheProduit({ params }: { params: { id: string } }) {
-  const [produit, ventes, revendeurs] = await Promise.all([
+  const [produit, ventes, revendeurs, prixLieu] = await Promise.all([
     getProduit(params.id),
     getVentes(params.id),
     getRevendeurs(),
+    getPrixLieu(params.id),
   ])
 
   if (!produit) notFound()
@@ -115,6 +122,13 @@ export default async function FicheProduit({ params }: { params: { id: string } 
           <div className="stat-value">{produit.quantite}</div>
         </div>
       </div>
+
+      <PrixParLieu
+        produitId={produit.id}
+        prixRevient={produit.prix_revient}
+        revendeurs={revendeurs}
+        prixExistants={prixLieu}
+      />
 
       {produit.notes && (
         <div style={{ background: 'var(--color-accent-light)', borderRadius: 'var(--radius)', padding: 'var(--space-4)', marginBottom: 'var(--space-5)' }}>

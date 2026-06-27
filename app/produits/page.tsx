@@ -17,8 +17,20 @@ async function getCategories() {
   return data || []
 }
 
+async function getRevendeurs() {
+  const { data } = await supabase.from('revendeurs').select('id, nom').order('nom')
+  return data || []
+}
+
+async function getPrixLieu() {
+  const { data } = await supabase.from('prix_lieu').select('produit_id, revendeur_id, prix_vente')
+  return data || []
+}
+
 export default async function ProduitsPage() {
-  const [produits, categories] = await Promise.all([getProduits(), getCategories()])
+  const [produits, categories, revendeurs, prixLieu] = await Promise.all([
+    getProduits(), getCategories(), getRevendeurs(), getPrixLieu(),
+  ])
 
   return (
     <div className="page-container">
@@ -35,7 +47,7 @@ export default async function ProduitsPage() {
         </Link>
       </div>
 
-      <CartesProduits produits={produits} categories={categories} />
+      <CartesProduits produits={produits} categories={categories} revendeurs={revendeurs} prixLieu={prixLieu} />
     </div>
   )
 }
