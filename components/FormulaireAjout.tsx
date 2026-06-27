@@ -34,6 +34,8 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
   const inputFichier = useRef<HTMLInputElement>(null)
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
+  const [succes, setSucces] = useState(false)
+  const [nomEnregistre, setNomEnregistre] = useState('')
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [fichierPhoto, setFichierPhoto] = useState<File | null>(null)
 
@@ -105,12 +107,40 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
         photo_url,
       })
       if (error) throw new Error(error.message)
-      window.location.href = '/produits'
+      setNomEnregistre(form.nom.trim())
+      setSucces(true)
     } catch (err: any) {
       setErreur(err.message || 'Une erreur est survenue.')
     } finally {
       setChargement(false)
     }
+  }
+
+  if (succes) {
+    return (
+      <div style={{ maxWidth: 640, textAlign: 'center', padding: 'var(--space-10) var(--space-5)' }}>
+        <div style={{ fontSize: 48, marginBottom: 'var(--space-4)' }}>✓</div>
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 'var(--space-3)' }}>
+          Article enregistré !
+        </h2>
+        <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-6)' }}>
+          « {nomEnregistre} » a bien été ajouté à ton stock.
+        </p>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <a href="/produits" className="btn btn-accent">Voir mon stock</a>
+          <button className="btn btn-secondary" onClick={() => {
+            setSucces(false)
+            setNomEnregistre('')
+            setErreur('')
+            setPhotoPreview(null)
+            setFichierPhoto(null)
+            setForm({ nom: '', categorie_id: '', sous_categorie_id: '', prix_achat: '', frais_annexes: '0', prix_vente_souhaite: '', quantite: '1', etat: 'disponible', notes: '' })
+          }}>
+            Ajouter un autre article
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
