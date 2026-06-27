@@ -19,8 +19,12 @@ async function getProduit(id: string) {
 }
 
 async function getPrixLieu(produitId: string) {
-  const { data } = await supabase.from('prix_lieu').select('revendeur_id, prix_vente').eq('produit_id', produitId)
-  return data || []
+  try {
+    const { data } = await supabase.from('prix_lieu').select('revendeur_id, prix_vente').eq('produit_id', produitId)
+    return data || []
+  } catch {
+    return []
+  }
 }
 
 async function getVentes(produitId: string) {
