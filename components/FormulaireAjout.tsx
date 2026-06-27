@@ -115,6 +115,11 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
 
   return (
     <form onSubmit={soumettre} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)', maxWidth: 640 }}>
+      {erreur && (
+        <div style={{ background: 'var(--color-danger-light)', border: '2px solid var(--color-danger)', borderRadius: 'var(--radius)', padding: 'var(--space-4)', color: 'var(--color-danger)', fontWeight: 600 }}>
+          {erreur}
+        </div>
+      )}
       {/* Photo */}
       <div className="form-group">
         <label className="form-label">Photo de l'article</label>
