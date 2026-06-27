@@ -68,6 +68,85 @@ function agréger(ventes: any[]) {
   return { cats: tri(cats), sousCats: tri(sousCats), produits: tri(produits).slice(0, 15) }
 }
 
+type LieuStat = {
+  id: string; nom: string; commissionType: string; commissionValeur: number
+  ca: number; margeNette: number; nbArticles: number; nbJours: number
+}
+
+function agrégerLieux(ventes: any[]): LieuStat[] {
+  const map = new Map<string, LieuStat>()
+  const jours = new Map<string, Set<string>>()
+  for (const v of ventes) {
+    if (v.canal !== 'revendeur' || !v.revendeur) continue
+    const id = v.revendeur.id
+    const existing = map.get(id) || {
+      id, nom: v.revendeur.nom,
+      commissionType: v.revendeur.commission_type,
+      commissionValeur: v.revendeur.commission_valeur,
+      ca: 0, margeNette: 0, nbArticles: 0, nbJours: 0,
+    }
+    existing.ca += v.prix_vente_reel * v.quantite_vendue
+    existing.margeNette += v.marge_nette
+    existing.nbArticles += v.quantite_vendue
+    map.set(id, existing)
+    if (!jours.has(id)) jours.set(id, new Set())
+    jours.get(id)!.add(v.date_vente.slice(0, 10))
+  }
+  const result = Array.from(map.values())
+  result.forEach(l => { l.nbJours = jours.get(l.id)?.size || 1 })
+  return result.sort((a, b) => b.ca - a.ca)
+}
+
+function SectionLieux({ lieux }: { lieux: LieuStat[] }) {
+  if (lieux.length === 0) return null
+  return (
+    <div className="card card-body" style={{ marginBottom: 'var(--space-5)' }}>
+      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-4)', color: 'var(--color-text-primary)' }}>
+        Par lieu de vente
+      </h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        {lieux.map(lieu => {
+          const fraisEntree = lieu.commissionType === 'entree' ? lieu.commissionValeur * lieu.nbJours : 0
+          const benefice = lieu.margeNette - fraisEntree
+          const rentable = benefice >= 0
+          return (
+            <div key={lieu.id} style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-4)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-3)', marginBottom: 6 }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 'var(--text-base)' }}>{lieu.nom}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                    {lieu.nbArticles} article{lieu.nbArticles > 1 ? 's' : ''} · {lieu.nbJours} événement{lieu.nbJours > 1 ? 's' : ''}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: 'var(--text-base)' }}>{euro(lieu.ca)}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>CA brut</div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 'var(--space-2)' }}>
+                {fraisEntree > 0 && (
+                  <div style={{ background: 'var(--color-warning-light)', borderRadius: 'var(--radius)', padding: '6px 10px' }}>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning)' }}>Frais d'entrée</div>
+                    <div style={{ fontWeight: 600, color: 'var(--color-warning)', fontSize: 'var(--text-sm)' }}>−{euro(fraisEntree)}</div>
+                  </div>
+                )}
+                <div style={{ background: rentable ? 'var(--color-success-light)' : 'var(--color-danger-light)', borderRadius: 'var(--radius)', padding: '6px 10px' }}>
+                  <div style={{ fontSize: 'var(--text-xs)', color: rentable ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                    Bénéfice net {rentable ? '✓' : '✗'}
+                  </div>
+                  <div style={{ fontWeight: 700, color: rentable ? 'var(--color-success)' : 'var(--color-danger)', fontSize: 'var(--text-sm)' }}>
+                    {euro(benefice)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function BarreStats({ items }: { items: StatItem[] }) {
   const max = items[0]?.ca || 1
   return (
@@ -140,6 +219,7 @@ export default function StatsVentes({ ventes }: { ventes: any[] }) {
   const [periode, setPeriode] = useState<Periode>('mois')
   const liste = filtrer(ventes, periode)
   const { cats, sousCats, produits } = agréger(liste)
+  const lieux = agrégerLieux(liste)
   const caTotal = liste.filter(v => v.produit).reduce((s, v) => s + v.prix_vente_reel * v.quantite_vendue, 0)
 
   return (
@@ -179,6 +259,7 @@ export default function StatsVentes({ ventes }: { ventes: any[] }) {
         </div>
       ) : (
         <>
+          <SectionLieux lieux={lieux} />
           <Section titre="Par catégorie" items={cats} vide="Aucune catégorie" />
           {sousCats.length > 0 && (
             <Section titre="Par sous-catégorie" items={sousCats} vide="Aucune sous-catégorie" />

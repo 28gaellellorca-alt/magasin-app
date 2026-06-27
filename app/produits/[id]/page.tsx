@@ -155,7 +155,7 @@ export default async function FicheProduit({ params }: { params: { id: string } 
                     )}
                     <div>
                       <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
-                        {new Date(v.date_vente).toLocaleDateString('fr-FR')} — {v.canal === 'direct' ? 'Vente directe' : `Via ${v.revendeur?.nom || 'revendeur'}`}
+                        {new Date(v.date_vente).toLocaleDateString('fr-FR')} — {v.canal === 'direct' ? 'Vente directe' : `Via ${v.revendeur?.nom || 'lieu de vente'}`}
                       </div>
                       <div className="card-meta">{v.quantite_vendue} article{v.quantite_vendue > 1 ? 's' : ''}</div>
                     </div>

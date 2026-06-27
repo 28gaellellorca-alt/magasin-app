@@ -5,7 +5,8 @@ async function getVentes() {
   const { data } = await supabase
     .from('ventes')
     .select(`
-      prix_vente_reel, quantite_vendue, marge_nette, date_vente, photo_url,
+      prix_vente_reel, quantite_vendue, marge_nette, date_vente, photo_url, canal,
+      revendeur:revendeurs(id, nom, commission_type, commission_valeur),
       produit:produits(
         id, nom, photo_url,
         categorie:categories(id, nom),

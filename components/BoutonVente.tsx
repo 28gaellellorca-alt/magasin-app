@@ -42,9 +42,9 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
 
   let commission = 0
   if (form.canal === 'revendeur' && rev) {
-    commission = rev.commission_type === 'pourcentage'
-      ? prixUnitaire * rev.commission_valeur / 100
-      : rev.commission_valeur
+    if (rev.commission_type === 'pourcentage') commission = prixUnitaire * rev.commission_valeur / 100
+    else if (rev.commission_type === 'fixe') commission = rev.commission_valeur
+    // 'entree' : frais global par événement, pas par article → commission = 0 ici
   }
   const margeNette = prixUnitaire - commission - prixRevient
 
@@ -164,6 +164,11 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
             <div style={{ color: 'var(--color-text-secondary)' }}>
               Prix de revient : <strong>{euro(prixRevient)}</strong>
             </div>
+            {form.canal === 'revendeur' && rev?.commission_type === 'entree' && (
+              <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
+                Frais d'entrée {euro(rev.commission_valeur)} — déduit du bilan global, pas par article
+              </div>
+            )}
             {form.canal === 'revendeur' && commission > 0 && (
               <div style={{ color: 'var(--color-text-secondary)' }}>Commission : <strong>{euro(commission)}</strong></div>
             )}
@@ -213,19 +218,30 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
           <select className="form-input" value={form.canal}
             onChange={e => setForm(f => ({ ...f, canal: e.target.value, revendeur_id: '' }))}>
             <option value="direct">Vente directe</option>
-            <option value="revendeur">Via un revendeur</option>
+            <option value="revendeur">Via un lieu de vente</option>
           </select>
         </div>
 
         {form.canal === 'revendeur' && revendeurs.length > 0 && (
           <div className="form-group">
-            <label className="form-label">Revendeur</label>
+            <label className="form-label">Lieu de vente</label>
             <select className="form-input" value={form.revendeur_id}
-              onChange={e => setForm(f => ({ ...f, revendeur_id: e.target.value }))}>
-              <option value="">Choisir un revendeur...</option>
+              onChange={e => {
+                const lieu = revendeurs.find(r => r.id === e.target.value)
+                const remise = lieu?.remise_defaut || 0
+                setForm(f => ({
+                  ...f,
+                  revendeur_id: e.target.value,
+                  ...(remise > 0 ? {
+                    remise: remise.toString(),
+                    prix_vente_reel: (prixSouhaite * (1 - remise / 100)).toFixed(2),
+                  } : {}),
+                }))
+              }}>
+              <option value="">Choisir un lieu...</option>
               {revendeurs.map(r => (
                 <option key={r.id} value={r.id}>
-                  {r.nom} ({r.commission_type === 'pourcentage' ? `${r.commission_valeur}%` : euro(r.commission_valeur)})
+                  {r.nom}{r.commission_type === 'pourcentage' ? ` (${r.commission_valeur}%)` : r.commission_type === 'entree' ? ` (${euro(r.commission_valeur)} entrée)` : ` (${euro(r.commission_valeur)}/article)`}
                 </option>
               ))}
             </select>
