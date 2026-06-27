@@ -1,6 +1,5 @@
 'use client'
 import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Upload, X, Calculator } from 'lucide-react'
 import Image from 'next/image'
@@ -32,7 +31,6 @@ function euro(val: number) {
 interface Props { categories: any[]; sousCategories: any[] }
 
 export default function FormulaireAjout({ categories, sousCategories }: Props) {
-  const router = useRouter()
   const inputFichier = useRef<HTMLInputElement>(null)
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
@@ -107,8 +105,7 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
         photo_url,
       })
       if (error) throw new Error(error.message)
-      router.push('/produits')
-      router.refresh()
+      window.location.href = '/produits'
     } catch (err: any) {
       setErreur(err.message || 'Une erreur est survenue.')
     } finally {

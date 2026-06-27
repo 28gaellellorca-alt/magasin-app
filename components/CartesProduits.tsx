@@ -24,7 +24,7 @@ function CarteInfo({ p }: { p: any }) {
         {p.photo_url ? (
           <Image src={p.photo_url} alt={p.nom} width={300} height={225} className="card-image" />
         ) : (
-          <div className="card-image" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card-image" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-primary-light)' }}>
             <Package size={40} color="var(--color-primary)" strokeWidth={1} />
           </div>
         )}
