@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, Package, Edit } from 'lucide-react'
 import BoutonVente from '@/components/BoutonVente'
 import BoutonAnnulerVente from '@/components/BoutonAnnulerVente'
+import BoutonSupprimerProduit from '@/components/BoutonSupprimerProduit'
 
 async function getProduit(id: string) {
   const { data } = await supabase
@@ -74,9 +75,12 @@ export default async function FicheProduit({ params }: { params: { id: string } 
             </span>
           </div>
         </div>
-        <Link href={`/produits/${produit.id}/modifier`} className="btn btn-secondary btn-sm">
-          <Edit size={14} /> Modifier
-        </Link>
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <Link href={`/produits/${produit.id}/modifier`} className="btn btn-secondary btn-sm">
+            <Edit size={14} /> Modifier
+          </Link>
+          <BoutonSupprimerProduit produitId={produit.id} photoUrl={produit.photo_url} />
+        </div>
       </div>
 
       {/* Bloc marges */}
