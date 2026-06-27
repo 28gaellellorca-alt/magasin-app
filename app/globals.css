@@ -141,10 +141,23 @@ textarea.form-input { min-height: 88px; resize: vertical; }
 }
 .nav-item.active { color: var(--color-primary); background: var(--color-primary-light); }
 
-/* --- DÉCALAGE PRINCIPAL (sidebar desktop) --- */
-.main-content { display: block; }
+/* --- EN-TÊTE MOBILE AVEC LOGO --- */
+.nav-header-mobile {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 68px;
+  background: #3A2E20;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
 @media (min-width: 768px) {
-  .main-content { margin-left: 220px; }
+  .nav-header-mobile { display: none; }
+}
+
+/* --- DÉCALAGE PRINCIPAL (sidebar desktop / header mobile) --- */
+.main-content { display: block; padding-top: 68px; }
+@media (min-width: 768px) {
+  .main-content { margin-left: 220px; padding-top: 0; }
 }
 
 /* --- NAVIGATION DESKTOP (sidebar) --- */
