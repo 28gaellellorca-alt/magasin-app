@@ -27,6 +27,9 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
     revendeur_id: '',
     quantite_vendue: '1',
     remise: '',
+    ajustement_type: 'reduction' as 'reduction' | 'augmentation',
+    ajustement_unite: 'pct' as 'pct' | 'eur',
+    ajustement_valeur: '',
     mode_paiement: 'especes',
     acheteur: '',
     notes: '',
@@ -46,15 +49,35 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
   }
   const margeNette = prixUnitaire - commission - prixRevient
 
-  function handleRemise(val: string) {
-    const pct = Math.min(Math.max(parseFloat(val) || 0, 0), 100)
-    const prixReduit = prixSouhaite * (1 - pct / 100)
-    setForm(f => ({ ...f, remise: val, prix_vente_reel: prixReduit.toFixed(2) }))
+  function calculerPrix(valeur: number, type: 'reduction' | 'augmentation', unite: 'pct' | 'eur') {
+    if (valeur <= 0) return prixSouhaite
+    if (type === 'reduction') {
+      return unite === 'pct' ? prixSouhaite * (1 - valeur / 100) : prixSouhaite - valeur
+    } else {
+      return unite === 'pct' ? prixSouhaite * (1 + valeur / 100) : prixSouhaite + valeur
+    }
+  }
+
+  function handleAjustementValeur(val: string) {
+    const valeur = parseFloat(val) || 0
+    const prix = calculerPrix(valeur, form.ajustement_type, form.ajustement_unite)
+    const remise = form.ajustement_type === 'reduction' && form.ajustement_unite === 'pct' ? val : ''
+    setForm(f => ({ ...f, ajustement_valeur: val, prix_vente_reel: Math.max(0, prix).toFixed(2), remise }))
+  }
+
+  function handleAjustementType(type: 'reduction' | 'augmentation') {
+    const valeur = parseFloat(form.ajustement_valeur) || 0
+    const prix = calculerPrix(valeur, type, form.ajustement_unite)
+    const remise = type === 'reduction' && form.ajustement_unite === 'pct' ? form.ajustement_valeur : ''
+    setForm(f => ({ ...f, ajustement_type: type, prix_vente_reel: Math.max(0, prix).toFixed(2), remise }))
+  }
+
+  function handleAjustementUnite(unite: 'pct' | 'eur') {
+    setForm(f => ({ ...f, ajustement_unite: unite, ajustement_valeur: '', remise: '', prix_vente_reel: (prixSouhaite || 0).toFixed(2) }))
   }
 
   function handlePrix(val: string) {
-    // Si le prix est modifié manuellement, on efface la remise
-    setForm(f => ({ ...f, prix_vente_reel: val, remise: '' }))
+    setForm(f => ({ ...f, prix_vente_reel: val, remise: '', ajustement_valeur: '' }))
   }
 
   async function enregistrerVente(e: React.FormEvent) {
@@ -134,17 +157,48 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
           </div>
         </div>
 
-        {/* Réduction */}
+        {/* Ajustement de prix */}
         <div className="form-group">
-          <label className="form-label">Réduction (% — optionnel)</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-            <input className="form-input" type="number" min="0" max="100" step="1" placeholder="0"
-              value={form.remise}
-              onChange={e => handleRemise(e.target.value)}
-              style={{ maxWidth: 100 }} />
-            {remisePct > 0 && (
+          <label className="form-label">Ajustement de prix (optionnel)</label>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
+            {(['reduction', 'augmentation'] as const).map(type => (
+              <button key={type} type="button"
+                onClick={() => handleAjustementType(type)}
+                style={{
+                  padding: '6px 14px', borderRadius: 'var(--radius)',
+                  border: `2px solid ${form.ajustement_type === type ? (type === 'reduction' ? 'var(--color-warning)' : 'var(--color-success)') : 'var(--color-border)'}`,
+                  background: form.ajustement_type === type ? (type === 'reduction' ? 'var(--color-warning-light)' : 'var(--color-success-light)') : 'var(--color-surface)',
+                  color: form.ajustement_type === type ? (type === 'reduction' ? 'var(--color-warning)' : 'var(--color-success)') : 'var(--color-text-secondary)',
+                  fontWeight: form.ajustement_type === type ? 600 : 400,
+                  cursor: 'pointer', fontSize: 'var(--text-sm)',
+                }}>
+                {type === 'reduction' ? 'Réduction' : 'Augmentation'}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <input className="form-input" type="number" min="0" step="1" placeholder="0"
+              value={form.ajustement_valeur}
+              onChange={e => handleAjustementValeur(e.target.value)}
+              style={{ maxWidth: 90 }} />
+            {(['pct', 'eur'] as const).map(unite => (
+              <button key={unite} type="button"
+                onClick={() => handleAjustementUnite(unite)}
+                style={{
+                  padding: '6px 12px', borderRadius: 'var(--radius)',
+                  border: `2px solid ${form.ajustement_unite === unite ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                  background: form.ajustement_unite === unite ? 'var(--color-primary-light)' : 'var(--color-surface)',
+                  color: form.ajustement_unite === unite ? 'var(--color-primary-dark)' : 'var(--color-text-secondary)',
+                  fontWeight: form.ajustement_unite === unite ? 600 : 400,
+                  cursor: 'pointer', fontSize: 'var(--text-sm)',
+                  minWidth: 44, minHeight: 44,
+                }}>
+                {unite === 'pct' ? '%' : '€'}
+              </button>
+            ))}
+            {parseFloat(form.ajustement_valeur) > 0 && (
               <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-                Prix réduit : <strong>{euro(prixUnitaire)}</strong> au lieu de {euro(prixSouhaite)}
+                {form.ajustement_type === 'reduction' ? 'Réduit' : 'Majoré'} à <strong>{euro(prixUnitaire)}</strong> au lieu de {euro(prixSouhaite)}
               </span>
             )}
           </div>
@@ -231,6 +285,9 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
                   revendeur_id: e.target.value,
                   ...(remise > 0 ? {
                     remise: remise.toString(),
+                    ajustement_type: 'reduction' as const,
+                    ajustement_unite: 'pct' as const,
+                    ajustement_valeur: remise.toString(),
                     prix_vente_reel: (prixSouhaite * (1 - remise / 100)).toFixed(2),
                   } : {}),
                 }))
