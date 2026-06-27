@@ -34,16 +34,16 @@ Ce qui compte le plus :
 ## 3. Périmètre du projet
 
 Ce que le projet doit faire :
-- Enregistrer chaque produit à réception : photo(s), nom, catégorie, sous-catégorie, prix d'achat, frais annexes, prix de vente souhaité, quantité, état, notes
-- Suggestion automatique de catégorie basée sur les mots-clés du nom du produit
-- Catégories et sous-catégories entièrement personnalisables (ajout, renommage, suppression)
-- Calcul automatique du prix de revient (achat + charges) en € et en %
-- Calcul de la marge nette selon le canal de vente (vente directe ou via revendeur avec commission paramétrable en € fixe ou en %)
-- Marquer un article vendu, noter le canal et le prix réel de vente
-- Tableau de bord : valeur du stock, CA potentiel, marges globales et par catégorie
-- Prévisions : tendances de vente, articles les plus vendus, stock vieillissant
-- Fiche produit complète avec photo et historique
-- Accès multi-collaborateurs via lien ou invitation simple
+- [x] Enregistrer chaque produit à réception : photo(s), nom, catégorie, sous-catégorie, prix d'achat, frais annexes, prix de vente souhaité, quantité, état, notes
+- [ ] Suggestion automatique de catégorie basée sur les mots-clés du nom du produit
+- [x] Catégories et sous-catégories entièrement personnalisables (ajout, renommage, suppression)
+- [x] Calcul automatique du prix de revient (achat + charges) en € et en %
+- [x] Calcul de la marge nette selon le canal de vente (vente directe ou via revendeur avec commission paramétrable en € fixe ou en %)
+- [x] Marquer un article vendu, noter le canal et le prix réel de vente
+- [x] Tableau de bord : valeur du stock, CA potentiel, marges globales — CA par catégorie non fait
+- [ ] Prévisions : tendances de vente, articles les plus vendus, stock vieillissant (alerte > 60j faite, tendances non faites)
+- [x] Fiche produit complète avec photo et historique des ventes
+- [x] Accès multi-collaborateurs via lien (pas de login — accès ouvert au lien)
 
 Ce que le projet ne doit pas faire pour l'instant :
 - Gestion de TVA (auto-entrepreneur sous le seuil de franchise)
@@ -145,7 +145,7 @@ Sources utilisées :
 
 Emplacement des données :
 - Base de données : Supabase projet `magasin-stock` — URL : `https://ktthghagczyuphdiwzbe.supabase.co`
-- Photos : Supabase Storage, bucket à créer : `product-images`
+- Photos : Supabase Storage, bucket **`images de produits`** (avec espaces, en français — nom exact à utiliser dans le code)
 - Clés de connexion : voir `cles-supabase.txt` dans ce dossier (jamais dans le code)
 
 Format d'entrée :
@@ -302,27 +302,97 @@ Choix refusés :
 - Application locale Windows (Python+Flask+SQLite) : abandonnée car non accessible sur téléphone et non partageable
 - Hébergement payant : inutile pour cet usage personnel
 
-## 16. Questions ouvertes
+## 16. Questions ouvertes (résolues)
 
-Questions à clarifier au démarrage du développement :
-- Quel dossier sera créé pour le code de l'application ? (à définir par l'utilisatrice)
-- Combien de revendeurs différents prévoir dans les paramètres ?
-- Faut-il un système de login ou l'accès est-il ouvert à quiconque possède le lien ?
+- Dossier du code : `magasin-app/` sur le bureau
+- Revendeurs : nombre illimité, gérés dans Réglages
+- Login : pas de login — accès ouvert à quiconque possède le lien Vercel (décision assumée)
 
-## 17. Définition de terminé
+## 17. État actuel — MVP terminé et en production
 
-La version MVP est considérée comme terminée quand :
-- On peut ajouter un produit avec photo depuis un téléphone
-- On peut voir la liste de tous les produits avec leurs marges
-- Le tableau de bord affiche la valeur du stock et le CA potentiel
-- L'application est en ligne sur Vercel et accessible depuis n'importe quel appareil
-- Une deuxième personne peut accéder à l'application depuis son téléphone
+**URL de production : `magasin-app.vercel.app`**
+**GitHub : `https://github.com/28gaellellorca-alt/magasin-app`**
 
-Livrables attendus :
-- Code source sur GitHub
-- Application en ligne sur Vercel (URL partageable)
-- Bases de données Supabase avec tables créées et fonctionnelles
-- Ce fichier CLAUDE.md à jour
+### Ce qui fonctionne aujourd'hui
 
-Dernière vérification :
-Claude doit vérifier que le scénario test fonctionne de bout en bout (ajout produit → calcul marge → tableau de bord), puis fournir l'URL Vercel et les prochaines étapes.
+**Stock :**
+- Ajout d'un article avec photo (depuis téléphone ou ordinateur)
+- Fiche produit : photo, catégorie, sous-catégorie, prix achat, frais, prix de revient, prix de vente, marge, quantité, état, notes
+- Liste des produits avec filtres par catégorie et état
+- Modifier un article
+- Supprimer un article (avec confirmation et avertissement si des ventes existent)
+
+**Ventes :**
+- Enregistrer une vente depuis la fiche produit : prix réel, quantité, canal (direct ou revendeur), acheteur (optionnel), notes (optionnel)
+- Calcul automatique de la marge au moment de la vente
+- Stock décrémenté automatiquement à chaque vente
+- Annuler une vente (avec remise en stock automatique)
+- Page Ventes : historique complet avec photo, date, acheteur, notes, prix et marge
+- La photo d'un article vendu reste visible même si l'article est supprimé
+
+**Tableau de bord :**
+- Nombre d'articles disponibles
+- Valeur du stock (prix de revient total)
+- CA potentiel (si tout est vendu au prix souhaité)
+- Marge potentielle
+- CA réalisé (ventes enregistrées)
+- Alerte articles > 60 jours en stock
+
+**Paramètres :**
+- Catégories et sous-catégories personnalisables
+- Revendeurs avec commission (% ou € fixe)
+
+**Design :**
+- Logo "Les Pépites de G&A" visible sur mobile (header) et desktop (sidebar)
+- Interface responsive mobile + desktop
+- Palette dorée/bois, design chaleureux artisanal
+
+### Structure de la base de données (Supabase)
+
+Tables créées et migrées :
+- `produits` — articles du stock
+- `categories` / `sous_categories` — organisation
+- `ventes` — historique des ventes (avec `photo_url` et `acheteur` ajoutés en migration)
+- `revendeurs` — canaux de vente avec commissions
+
+Migrations appliquées manuellement via SQL Editor :
+1. `ALTER TABLE ventes ADD COLUMN IF NOT EXISTS photo_url text;`
+2. `ALTER TABLE ventes DROP CONSTRAINT ventes_produit_id_fkey; ALTER TABLE ventes ADD CONSTRAINT ventes_produit_id_fkey FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE SET NULL;`
+3. `ALTER TABLE ventes ADD COLUMN IF NOT EXISTS acheteur text;`
+
+## 18. Prochaines étapes — par ordre de priorité
+
+### Priorité 1 — Utile pour la gestion quotidienne
+
+**CA par période sur le tableau de bord**
+Pourquoi : la déclaration URSSAF se fait par mois ou par trimestre. Aujourd'hui le CA affiché est total depuis le début. Il faut voir : CA du mois en cours, du trimestre en cours, de l'année civile.
+Travail : modifier `app/page.tsx` pour filtrer les ventes par période.
+
+**Estimation cotisations URSSAF**
+Pourquoi : en vente de marchandises, les cotisations sociales sont 12,3% du CA. Afficher "à mettre de côté ce trimestre : X€" aide à ne pas avoir de mauvaise surprise.
+Travail : calcul simple à ajouter sur le tableau de bord.
+
+**Alerte seuil TVA**
+Pourquoi : la franchise TVA s'arrête à 85 000€ de CA annuel. Une barre de progression sur le tableau de bord évite de dépasser sans le savoir.
+Travail : comparer le CA annuel à un seuil paramétrable.
+
+### Priorité 2 — Confort d'utilisation
+
+**Export CSV des ventes**
+Pourquoi : pour la déclaration ou un comptable, avoir les ventes d'une période en tableau Excel.
+Travail : bouton d'export sur la page Ventes.
+
+**Recherche dans la liste des produits**
+Pourquoi : quand il y aura 50+ articles, retrouver un article par mot-clé sera nécessaire.
+Travail : barre de recherche côté client dans `app/produits/page.tsx`.
+
+**Filtre par date sur la page Ventes**
+Pourquoi : voir uniquement les ventes de ce mois ou de cette semaine.
+Travail : sélecteur de période sur `app/ventes/page.tsx`.
+
+### Priorité 3 — À envisager plus tard
+
+- Dépenses générales (non liées à un article : frais de marché, abonnements)
+- Articles les plus vendus (statistiques)
+- CA et marge par catégorie sur le tableau de bord
+- Objectif de CA mensuel avec indicateur de progression
