@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Package, Edit } from 'lucide-react'
 import BoutonVente from '@/components/BoutonVente'
+import BoutonAnnulerVente from '@/components/BoutonAnnulerVente'
 
 async function getProduit(id: string) {
   const { data } = await supabase
@@ -133,16 +134,23 @@ export default async function FicheProduit({ params }: { params: { id: string } 
           <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-4)' }}>Historique des ventes</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
             {ventes.map((v: any) => (
-              <div key={v.id} className="card card-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-4)' }}>
+              <div key={v.id} className="card card-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-4)', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
                     {new Date(v.date_vente).toLocaleDateString('fr-FR')} — {v.canal === 'direct' ? 'Vente directe' : `Via ${v.revendeur?.nom || 'revendeur'}`}
                   </div>
                   <div className="card-meta">{v.quantite_vendue} article{v.quantite_vendue > 1 ? 's' : ''}</div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{euro(v.prix_vente_reel)}</div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-success)' }}>Marge : {euro(v.marge_nette)}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{euro(v.prix_vente_reel)}</div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-success)' }}>Marge : {euro(v.marge_nette)}</div>
+                  </div>
+                  <BoutonAnnulerVente
+                    venteId={v.id}
+                    produitId={produit.id}
+                    quantiteVendue={v.quantite_vendue}
+                  />
                 </div>
               </div>
             ))}
