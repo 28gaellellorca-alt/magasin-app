@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
   --color-primary:       #C4953A;
@@ -13,7 +13,7 @@
   --color-warning-light: #FEF8E8;
   --color-danger:        #C0544A;
   --color-danger-light:  #FDECEA;
-  --color-text-primary:   #3A2E20;
+  --color-text-primary:   #2C2416;
   --color-text-secondary: #6B5A45;
   --color-text-muted:     #A09080;
   --color-bg:             #F8F4EE;
@@ -21,7 +21,8 @@
   --color-border:         #E8E0D0;
   --color-border-strong:  #C8B8A0;
 
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans:  'Inter', system-ui, sans-serif;
+  --font-serif: 'EB Garamond', Georgia, serif;
   --text-xs:   clamp(0.75rem,  1.5vw, 0.875rem);
   --text-sm:   clamp(0.875rem, 2vw,   1rem);
   --text-base: clamp(1rem,     2.5vw, 1.125rem);
@@ -111,8 +112,8 @@ textarea.form-input { min-height: 88px; resize: vertical; }
 .card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
 .card-image { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: var(--color-primary-light); }
 .card-body  { padding: var(--space-4); }
-.card-title { font-size: var(--text-base); font-weight: 600; color: var(--color-text-primary); }
-.card-price { font-size: var(--text-lg); font-weight: 700; color: var(--color-primary); }
+.card-title { font-size: var(--text-base); font-weight: 600; color: var(--color-text-primary); font-family: var(--font-serif); }
+.card-price { font-size: var(--text-lg); font-weight: 600; color: var(--color-primary); font-family: var(--font-serif); }
 .card-meta  { font-size: var(--text-xs); color: var(--color-text-muted); }
 
 /* --- BADGES --- */
@@ -145,7 +146,7 @@ textarea.form-input { min-height: 88px; resize: vertical; }
 .nav-header-mobile {
   position: fixed; top: 0; left: 0; right: 0;
   height: 68px;
-  background: #3A2E20;
+  background: #2C2416;
   display: flex; align-items: center; justify-content: center;
   z-index: 100;
   box-shadow: 0 2px 8px rgba(0,0,0,0.18);
@@ -168,7 +169,7 @@ textarea.form-input { min-height: 88px; resize: vertical; }
   .nav-sidebar {
     display: flex; flex-direction: column;
     position: fixed; top: 0; left: 0; bottom: 0; width: 220px;
-    background: #3A2E20;
+    background: #2C2416;
     border-right: none;
     z-index: 100; overflow-y: auto;
   }
@@ -211,7 +212,7 @@ textarea.form-input { min-height: 88px; resize: vertical; }
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: var(--space-6); gap: var(--space-4); flex-wrap: wrap;
 }
-.page-title { font-size: var(--text-xl); font-weight: 700; color: var(--color-text-primary); }
+.page-title { font-size: var(--text-xl); font-weight: 600; color: var(--color-text-primary); font-family: var(--font-serif); }
 
 /* --- STAT CARDS (tableau de bord) --- */
 .stat-card {
@@ -220,7 +221,7 @@ textarea.form-input { min-height: 88px; resize: vertical; }
   border-top: 3px solid var(--color-primary);
 }
 .stat-label { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-.stat-value { font-size: var(--text-xl); font-weight: 700; color: var(--color-text-primary); margin-top: 4px; }
+.stat-value { font-size: var(--text-xl); font-weight: 600; color: var(--color-text-primary); margin-top: 4px; font-family: var(--font-serif); }
 .stat-sub   { font-size: var(--text-sm); color: var(--color-text-secondary); margin-top: 2px; }
 
 /* --- UTILITAIRES --- */
