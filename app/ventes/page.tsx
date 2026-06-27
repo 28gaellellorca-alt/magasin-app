@@ -94,6 +94,15 @@ export default async function VentesPage() {
                     {' — '}
                     {v.quantite_vendue} article{v.quantite_vendue > 1 ? 's' : ''}
                     {v.acheteur && <span> — <strong>{v.acheteur}</strong></span>}
+                    {' — '}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                      {v.mode_paiement === 'carte' ? 'Carte' : 'Espèces'}
+                    </span>
+                    {v.remise > 0 && (
+                      <span style={{ marginLeft: 6, background: 'var(--color-warning-light)', color: 'var(--color-warning)', borderRadius: 'var(--radius-full)', padding: '1px 8px', fontSize: 'var(--text-xs)', fontWeight: 600 }}>
+                        -{v.remise}%
+                      </span>
+                    )}
                   </div>
                   {v.notes && (
                     <div style={{ marginTop: 4, fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>

@@ -36,13 +36,15 @@ function filtrerParPeriode(ventes: Vente[], periode: Periode): Vente[] {
 }
 
 function genererCSV(ventes: Vente[]): string {
-  const entetes = ['Date', 'Article', 'Acheteur', 'Canal', 'Quantité vendue', 'Prix de vente (€)', 'Marge nette (€)', 'Notes']
-  const lignes = ventes.map(v => [
+  const entetes = ['Date', 'Article', 'Acheteur', 'Canal', 'Paiement', 'Quantité vendue', 'Réduction (%)', 'Prix de vente (€)', 'Marge nette (€)', 'Notes']
+  const lignes = ventes.map((v: any) => [
     new Date(v.date_vente).toLocaleDateString('fr-FR'),
     v.produit?.nom || 'Article supprimé',
     v.acheteur || '',
     v.canal === 'direct' ? 'Vente directe' : `Via ${v.revendeur?.nom || 'revendeur'}`,
+    v.mode_paiement === 'carte' ? 'Carte' : 'Espèces',
     v.quantite_vendue,
+    v.remise || '0',
     v.prix_vente_reel.toFixed(2).replace('.', ','),
     v.marge_nette.toFixed(2).replace('.', ','),
     v.notes || '',
