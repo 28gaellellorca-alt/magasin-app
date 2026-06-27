@@ -294,6 +294,9 @@ Décisions importantes :
 - **GitHub comme intermédiaire** : toute modification du code passe par GitHub → Vercel se met à jour automatiquement
 - **Projet Supabase créé** : `magasin-stock`, région West EU (Ireland), clés notées dans `cles-supabase.txt`
 - **Design system** : skill `ui-design` avec palette violet doux + corail chaud, mobile-first, WCAG AA
+- **Bucket Supabase Storage** : nommé `images de produits` (avec espaces, en français) — toujours utiliser ce nom exact dans le code
+- **GitHub** : dépôt `https://github.com/28gaellellorca-alt/magasin-app`
+- **Vercel** : application déployée sur `magasin-app.vercel.app` — MVP fonctionnel en production
 
 Choix refusés :
 - Application locale Windows (Python+Flask+SQLite) : abandonnée car non accessible sur téléphone et non partageable
