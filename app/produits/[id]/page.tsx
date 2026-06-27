@@ -47,14 +47,15 @@ function euro(val: number) {
 }
 
 export default async function FicheProduit({ params }: { params: { id: string } }) {
-  const [produit, ventes, revendeurs, prixLieu] = await Promise.all([
+  const [produit, ventes, revendeurs] = await Promise.all([
     getProduit(params.id),
     getVentes(params.id),
     getRevendeurs(),
-    getPrixLieu(params.id),
   ])
 
   if (!produit) notFound()
+
+  const prixLieu = await getPrixLieu(params.id)
 
   const marge = produit.prix_vente_souhaite - produit.prix_revient
   const margePct = produit.prix_revient > 0 ? Math.round((marge / produit.prix_revient) * 100) : 0
