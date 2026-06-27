@@ -144,6 +144,8 @@ export default async function FicheProduit({ params }: { params: { id: string } 
             prixRevient={produit.prix_revient}
             quantiteDisponible={produit.quantite}
             revendeurs={revendeurs}
+            lieuDepotId={produit.lieu_depot?.id || null}
+            quantiteEnDepot={produit.quantite_en_depot || 0}
           />
         </div>
       )}

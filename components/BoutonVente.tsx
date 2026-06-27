@@ -11,13 +11,15 @@ interface Props {
   prixRevient: number
   quantiteDisponible: number
   revendeurs: any[]
+  lieuDepotId?: string | null
+  quantiteEnDepot?: number
 }
 
 function euro(val: number) {
   return val.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
 }
 
-export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouhaite, prixRevient, quantiteDisponible, revendeurs }: Props) {
+export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouhaite, prixRevient, quantiteDisponible, revendeurs, lieuDepotId, quantiteEnDepot = 0 }: Props) {
   const [ouvert, setOuvert] = useState(false)
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
@@ -110,12 +112,19 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
       if (errVente) throw new Error(errVente.message || errVente.details || 'Erreur enregistrement vente')
 
       const nouvelleQuantite = quantiteDisponible - qteVendue
+      const venduAuDepot = form.canal === 'revendeur' && form.revendeur_id === lieuDepotId && quantiteEnDepot > 0
+      const nouvelleQteDepot = venduAuDepot ? Math.max(0, quantiteEnDepot - qteVendue) : undefined
+
       const { error: errProduit } = await supabase
         .from('produits')
         .update({
           quantite: nouvelleQuantite,
           etat: nouvelleQuantite <= 0 ? 'vendu' : 'disponible',
           ...(nouvelleQuantite <= 0 ? { lieu_depot_id: null, quantite_en_depot: 0 } : {}),
+          ...(venduAuDepot && nouvelleQuantite > 0 ? {
+            quantite_en_depot: nouvelleQteDepot,
+            ...(nouvelleQteDepot === 0 ? { lieu_depot_id: null } : {}),
+          } : {}),
         })
         .eq('id', produitId)
       if (errProduit) throw new Error(errProduit.message || errProduit.details || 'Erreur mise à jour stock')
