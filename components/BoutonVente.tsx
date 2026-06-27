@@ -8,6 +8,8 @@ interface Props {
   produitId: string
   produitNom: string
   prixSouhaite: number
+  prixRevient: number
+  quantiteDisponible: number
   revendeurs: any[]
 }
 
@@ -15,7 +17,7 @@ function euro(val: number) {
   return val.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
 }
 
-export default function BoutonVente({ produitId, produitNom, prixSouhaite, revendeurs }: Props) {
+export default function BoutonVente({ produitId, produitNom, prixSouhaite, prixRevient, quantiteDisponible, revendeurs }: Props) {
   const router = useRouter()
   const [ouvert, setOuvert] = useState(false)
   const [chargement, setChargement] = useState(false)
@@ -30,22 +32,32 @@ export default function BoutonVente({ produitId, produitNom, prixSouhaite, reven
 
   const rev = revendeurs.find(r => r.id === form.revendeur_id)
   const prixReel = parseFloat(form.prix_vente_reel) || 0
+  const qteVendue = parseInt(form.quantite_vendue) || 1
+
   let commission = 0
   if (form.canal === 'revendeur' && rev) {
     commission = rev.commission_type === 'pourcentage'
       ? prixReel * rev.commission_valeur / 100
       : rev.commission_valeur
   }
-  const margeNette = prixReel - commission
+  // Marge nette réelle = prix de vente - commission - prix de revient
+  const margeNette = prixReel - commission - prixRevient
 
   async function enregistrerVente(e: React.FormEvent) {
     e.preventDefault()
     setErreur('')
+
+    if (qteVendue > quantiteDisponible) {
+      setErreur(`Quantité insuffisante — il reste ${quantiteDisponible} article${quantiteDisponible > 1 ? 's' : ''} en stock.`)
+      return
+    }
+
     setChargement(true)
     try {
-      const { error } = await supabase.from('ventes').insert({
+      // 1. Enregistrer la vente
+      const { error: errVente } = await supabase.from('ventes').insert({
         produit_id: produitId,
-        quantite_vendue: parseInt(form.quantite_vendue) || 1,
+        quantite_vendue: qteVendue,
         prix_vente_reel: prixReel,
         canal: form.canal,
         revendeur_id: form.canal === 'revendeur' ? form.revendeur_id || null : null,
@@ -53,9 +65,18 @@ export default function BoutonVente({ produitId, produitNom, prixSouhaite, reven
         date_vente: new Date().toISOString(),
         notes: form.notes.trim() || null,
       })
-      if (error) throw new Error(error.message)
+      if (errVente) throw new Error(errVente.message)
 
-      await supabase.from('produits').update({ etat: 'vendu' }).eq('id', produitId)
+      // 2. Décrémenter la quantité en stock
+      const nouvelleQuantite = quantiteDisponible - qteVendue
+      const { error: errProduit } = await supabase
+        .from('produits')
+        .update({
+          quantite: nouvelleQuantite,
+          etat: nouvelleQuantite <= 0 ? 'vendu' : 'disponible',
+        })
+        .eq('id', produitId)
+      if (errProduit) throw new Error(errProduit.message)
 
       setOuvert(false)
       router.refresh()
@@ -76,7 +97,9 @@ export default function BoutonVente({ produitId, produitNom, prixSouhaite, reven
 
   return (
     <div style={{ background: 'var(--color-accent-light)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)' }}>
-      <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 600, marginBottom: 'var(--space-4)' }}>Enregistrer la vente de : {produitNom}</h3>
+      <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 600, marginBottom: 'var(--space-4)' }}>
+        Enregistrer la vente — {produitNom}
+      </h3>
       <form onSubmit={enregistrerVente} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
           <div className="form-group">
@@ -85,8 +108,8 @@ export default function BoutonVente({ produitId, produitNom, prixSouhaite, reven
               value={form.prix_vente_reel} onChange={e => setForm(f => ({ ...f, prix_vente_reel: e.target.value }))} />
           </div>
           <div className="form-group">
-            <label className="form-label">Quantité vendue</label>
-            <input className="form-input" type="number" min="1" step="1"
+            <label className="form-label">Quantité vendue (stock : {quantiteDisponible})</label>
+            <input className="form-input" type="number" min="1" max={quantiteDisponible} step="1"
               value={form.quantite_vendue} onChange={e => setForm(f => ({ ...f, quantite_vendue: e.target.value }))} />
           </div>
         </div>
@@ -114,17 +137,20 @@ export default function BoutonVente({ produitId, produitNom, prixSouhaite, reven
         )}
 
         {prixReel > 0 && (
-          <div style={{ background: 'var(--color-primary-light)', borderRadius: 'var(--radius)', padding: 'var(--space-3)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+          <div style={{ background: 'var(--color-primary-light)', borderRadius: 'var(--radius)', padding: 'var(--space-3)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div>Prix de revient : <strong>{euro(prixRevient)}</strong></div>
             {form.canal === 'revendeur' && commission > 0 && (
               <div>Commission : <strong>{euro(commission)}</strong></div>
             )}
-            <div>Marge nette : <strong style={{ color: margeNette >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>{euro(margeNette)}</strong></div>
+            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 6, marginTop: 2 }}>
+              Marge nette : <strong style={{ color: margeNette >= 0 ? 'var(--color-success)' : 'var(--color-danger)', fontSize: 'var(--text-base)' }}>{euro(margeNette)}</strong>
+            </div>
           </div>
         )}
 
         <div className="form-group">
           <label className="form-label">Notes (facultatif)</label>
-          <input className="form-input" type="text" placeholder="Ex : vendu sur Vinted"
+          <input className="form-input" type="text" placeholder="Ex : vendu au marché de Noël"
             value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
         </div>
 

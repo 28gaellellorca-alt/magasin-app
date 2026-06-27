@@ -117,7 +117,14 @@ export default async function FicheProduit({ params }: { params: { id: string } 
 
       {produit.etat === 'disponible' && (
         <div style={{ marginBottom: 'var(--space-6)' }}>
-          <BoutonVente produitId={produit.id} produitNom={produit.nom} prixSouhaite={produit.prix_vente_souhaite} revendeurs={revendeurs} />
+          <BoutonVente
+            produitId={produit.id}
+            produitNom={produit.nom}
+            prixSouhaite={produit.prix_vente_souhaite}
+            prixRevient={produit.prix_revient}
+            quantiteDisponible={produit.quantite}
+            revendeurs={revendeurs}
+          />
         </div>
       )}
 
