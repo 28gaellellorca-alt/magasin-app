@@ -141,6 +141,12 @@ textarea.form-input { min-height: 88px; resize: vertical; }
 }
 .nav-item.active { color: var(--color-primary); background: var(--color-primary-light); }
 
+/* --- DÉCALAGE PRINCIPAL (sidebar desktop) --- */
+.main-content { display: block; }
+@media (min-width: 768px) {
+  .main-content { margin-left: 220px; }
+}
+
 /* --- NAVIGATION DESKTOP (sidebar) --- */
 .nav-sidebar { display: none; }
 
@@ -168,7 +174,6 @@ textarea.form-input { min-height: 88px; resize: vertical; }
   }
   .nav-sidebar-item:hover { background: rgba(196,149,58,0.15); color: #E8C878; }
   .nav-sidebar-item.active { background: rgba(196,149,58,0.2); color: #C4953A; }
-  .page-container { margin-left: 220px; }
 }
 
 /* --- GRILLE PRODUITS --- */
