@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 import { Package } from 'lucide-react'
+import BoutonExportCSV from '@/components/BoutonExportCSV'
 
 async function getVentes() {
   const { data } = await supabase
@@ -32,6 +33,7 @@ export default async function VentesPage() {
             {ventes.length} vente{ventes.length > 1 ? 's' : ''} enregistrée{ventes.length > 1 ? 's' : ''}
           </p>
         </div>
+        {ventes.length > 0 && <BoutonExportCSV ventes={ventes} />}
       </div>
 
       {ventes.length > 0 && (
