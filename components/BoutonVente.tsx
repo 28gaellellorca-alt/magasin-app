@@ -54,6 +54,8 @@ export default function BoutonVente({ produitId, produitNom, prixSouhaite, prixR
 
     setChargement(true)
     try {
+      const margeAEnregistrer = isNaN(margeNette) ? 0 : margeNette
+
       // 1. Enregistrer la vente
       const { error: errVente } = await supabase.from('ventes').insert({
         produit_id: produitId,
@@ -61,11 +63,11 @@ export default function BoutonVente({ produitId, produitNom, prixSouhaite, prixR
         prix_vente_reel: prixReel,
         canal: form.canal,
         revendeur_id: form.canal === 'revendeur' ? form.revendeur_id || null : null,
-        marge_nette: margeNette,
+        marge_nette: margeAEnregistrer,
         date_vente: new Date().toISOString(),
         notes: form.notes.trim() || null,
       })
-      if (errVente) throw new Error(errVente.message)
+      if (errVente) throw new Error(errVente.message || errVente.details || 'Erreur enregistrement vente')
 
       // 2. Décrémenter la quantité en stock
       const nouvelleQuantite = quantiteDisponible - qteVendue
@@ -76,12 +78,14 @@ export default function BoutonVente({ produitId, produitNom, prixSouhaite, prixR
           etat: nouvelleQuantite <= 0 ? 'vendu' : 'disponible',
         })
         .eq('id', produitId)
-      if (errProduit) throw new Error(errProduit.message)
+      if (errProduit) throw new Error(errProduit.message || errProduit.details || 'Erreur mise à jour stock')
 
       setOuvert(false)
       router.refresh()
     } catch (err: any) {
-      setErreur(err.message)
+      const msg = err?.message || err?.details || JSON.stringify(err) || 'Erreur inconnue'
+      setErreur(msg)
+      console.error('Erreur vente:', err)
     } finally {
       setChargement(false)
     }
@@ -154,7 +158,19 @@ export default function BoutonVente({ produitId, produitNom, prixSouhaite, prixR
             value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
         </div>
 
-        {erreur && <p className="form-error">{erreur}</p>}
+        {erreur && (
+          <div style={{
+            background: 'var(--color-danger-light)',
+            border: '2px solid var(--color-danger)',
+            borderRadius: 'var(--radius)',
+            padding: 'var(--space-4)',
+            color: 'var(--color-danger)',
+            fontWeight: 600,
+            fontSize: 'var(--text-sm)',
+          }}>
+            Erreur : {erreur}
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
           <button type="submit" className="btn btn-accent" disabled={chargement} style={{ flex: 1 }}>
