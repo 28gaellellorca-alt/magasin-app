@@ -7,6 +7,7 @@ import { ShoppingBag } from 'lucide-react'
 interface Props {
   produitId: string
   produitNom: string
+  photoUrl: string | null
   prixSouhaite: number
   prixRevient: number
   quantiteDisponible: number
@@ -17,7 +18,7 @@ function euro(val: number) {
   return val.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
 }
 
-export default function BoutonVente({ produitId, produitNom, prixSouhaite, prixRevient, quantiteDisponible, revendeurs }: Props) {
+export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouhaite, prixRevient, quantiteDisponible, revendeurs }: Props) {
   const router = useRouter()
   const [ouvert, setOuvert] = useState(false)
   const [chargement, setChargement] = useState(false)
@@ -64,6 +65,7 @@ export default function BoutonVente({ produitId, produitNom, prixSouhaite, prixR
         canal: form.canal,
         revendeur_id: form.canal === 'revendeur' ? form.revendeur_id || null : null,
         marge_nette: margeAEnregistrer,
+        photo_url: photoUrl || null,
         date_vente: new Date().toISOString(),
         notes: form.notes.trim() || null,
       })

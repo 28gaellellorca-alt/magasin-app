@@ -23,6 +23,7 @@ async function getVentes(produitId: string) {
     .eq('produit_id', produitId)
     .order('date_vente', { ascending: false })
   return data || []
+
 }
 
 async function getRevendeurs() {
@@ -125,6 +126,7 @@ export default async function FicheProduit({ params }: { params: { id: string } 
           <BoutonVente
             produitId={produit.id}
             produitNom={produit.nom}
+            photoUrl={produit.photo_url}
             prixSouhaite={produit.prix_vente_souhaite}
             prixRevient={produit.prix_revient}
             quantiteDisponible={produit.quantite}
@@ -137,27 +139,41 @@ export default async function FicheProduit({ params }: { params: { id: string } 
         <div>
           <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-4)' }}>Historique des ventes</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            {ventes.map((v: any) => (
-              <div key={v.id} className="card card-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-4)', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-                <div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
-                    {new Date(v.date_vente).toLocaleDateString('fr-FR')} — {v.canal === 'direct' ? 'Vente directe' : `Via ${v.revendeur?.nom || 'revendeur'}`}
+            {ventes.map((v: any) => {
+              const photoVente = v.photo_url || produit.photo_url
+              return (
+                <div key={v.id} className="card card-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-4)', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                    {photoVente && (
+                      <Image
+                        src={photoVente}
+                        alt={produit.nom}
+                        width={56}
+                        height={56}
+                        style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 'var(--radius)', flexShrink: 0 }}
+                      />
+                    )}
+                    <div>
+                      <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
+                        {new Date(v.date_vente).toLocaleDateString('fr-FR')} — {v.canal === 'direct' ? 'Vente directe' : `Via ${v.revendeur?.nom || 'revendeur'}`}
+                      </div>
+                      <div className="card-meta">{v.quantite_vendue} article{v.quantite_vendue > 1 ? 's' : ''}</div>
+                    </div>
                   </div>
-                  <div className="card-meta">{v.quantite_vendue} article{v.quantite_vendue > 1 ? 's' : ''}</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{euro(v.prix_vente_reel)}</div>
-                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-success)' }}>Marge : {euro(v.marge_nette)}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{euro(v.prix_vente_reel)}</div>
+                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-success)' }}>Marge : {euro(v.marge_nette)}</div>
+                    </div>
+                    <BoutonAnnulerVente
+                      venteId={v.id}
+                      produitId={produit.id}
+                      quantiteVendue={v.quantite_vendue}
+                    />
                   </div>
-                  <BoutonAnnulerVente
-                    venteId={v.id}
-                    produitId={produit.id}
-                    quantiteVendue={v.quantite_vendue}
-                  />
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
