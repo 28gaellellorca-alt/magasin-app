@@ -1,6 +1,16 @@
 export const dynamic = 'force-dynamic'
 import { supabase } from '@/lib/supabase'
 import StatsVentes from '@/components/StatsVentes'
+import SectionDepots from '@/components/SectionDepots'
+
+async function getProduitsEnDepot() {
+  const { data } = await supabase
+    .from('produits')
+    .select('id, nom, photo_url, quantite, prix_vente_souhaite, lieu_depot:revendeurs(id, nom)')
+    .not('lieu_depot_id', 'is', null)
+    .eq('etat', 'disponible')
+  return data || []
+}
 
 async function getVentes() {
   const { data } = await supabase
@@ -19,7 +29,7 @@ async function getVentes() {
 }
 
 export default async function StatsPage() {
-  const ventes = await getVentes()
+  const [ventes, produitsEnDepot] = await Promise.all([getVentes(), getProduitsEnDepot()])
 
   return (
     <div className="page-container">
@@ -31,6 +41,7 @@ export default async function StatsPage() {
           </p>
         </div>
       </div>
+      <SectionDepots produits={produitsEnDepot} />
       <StatsVentes ventes={ventes} />
     </div>
   )

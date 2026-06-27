@@ -112,7 +112,11 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
       const nouvelleQuantite = quantiteDisponible - qteVendue
       const { error: errProduit } = await supabase
         .from('produits')
-        .update({ quantite: nouvelleQuantite, etat: nouvelleQuantite <= 0 ? 'vendu' : 'disponible' })
+        .update({
+          quantite: nouvelleQuantite,
+          etat: nouvelleQuantite <= 0 ? 'vendu' : 'disponible',
+          ...(nouvelleQuantite <= 0 ? { lieu_depot_id: null } : {}),
+        })
         .eq('id', produitId)
       if (errProduit) throw new Error(errProduit.message || errProduit.details || 'Erreur mise à jour stock')
 

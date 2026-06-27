@@ -6,11 +6,12 @@ import { ArrowLeft, Package, Edit } from 'lucide-react'
 import BoutonVente from '@/components/BoutonVente'
 import BoutonAnnulerVente from '@/components/BoutonAnnulerVente'
 import BoutonSupprimerProduit from '@/components/BoutonSupprimerProduit'
+import BoutonDepot from '@/components/BoutonDepot'
 
 async function getProduit(id: string) {
   const { data } = await supabase
     .from('produits')
-    .select('*, categorie:categories(nom), sous_categorie:sous_categories(nom)')
+    .select('*, categorie:categories(nom), sous_categorie:sous_categories(nom), lieu_depot:revendeurs(id, nom)')
     .eq('id', id)
     .single()
   return data
@@ -118,6 +119,16 @@ export default async function FicheProduit({ params }: { params: { id: string } 
       {produit.notes && (
         <div style={{ background: 'var(--color-accent-light)', borderRadius: 'var(--radius)', padding: 'var(--space-4)', marginBottom: 'var(--space-5)' }}>
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}><strong>Notes :</strong> {produit.notes}</p>
+        </div>
+      )}
+
+      {produit.etat === 'disponible' && (
+        <div style={{ marginBottom: 'var(--space-4)' }}>
+          <BoutonDepot
+            produitId={produit.id}
+            lieuDepot={produit.lieu_depot || null}
+            revendeurs={revendeurs}
+          />
         </div>
       )}
 
