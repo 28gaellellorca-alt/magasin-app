@@ -11,16 +11,18 @@ interface Props {
 export default function BoutonSupprimerProduit({ produitId, photoUrl }: Props) {
   const [confirme, setConfirme] = useState(false)
   const [chargement, setChargement] = useState(false)
+  const [verification, setVerification] = useState(false)
   const [erreur, setErreur] = useState('')
   const [nbVentes, setNbVentes] = useState<number | null>(null)
 
   async function verifierEtOuvrir() {
-    // Compter les ventes existantes pour ce produit
+    setVerification(true)
     const { count } = await supabase
       .from('ventes')
       .select('id', { count: 'exact', head: true })
       .eq('produit_id', produitId)
     setNbVentes(count ?? 0)
+    setVerification(false)
     setConfirme(true)
   }
 
@@ -50,6 +52,7 @@ export default function BoutonSupprimerProduit({ produitId, photoUrl }: Props) {
     return (
       <button
         onClick={verifierEtOuvrir}
+        disabled={verification}
         className="btn btn-sm"
         style={{
           background: 'none', border: '1.5px solid var(--color-danger)',
@@ -57,7 +60,7 @@ export default function BoutonSupprimerProduit({ produitId, photoUrl }: Props) {
         }}
       >
         <Trash2 size={15} />
-        Supprimer
+        {verification ? 'Vérification...' : 'Supprimer'}
       </button>
     )
   }
@@ -84,7 +87,9 @@ export default function BoutonSupprimerProduit({ produitId, photoUrl }: Props) {
         </p>
       )}
       {erreur && (
-        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-danger)', fontWeight: 500 }}>{erreur}</p>
+        <div style={{ background: 'white', border: '1px solid var(--color-danger)', borderRadius: 'var(--radius)', padding: 'var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--color-danger)', fontWeight: 500 }}>
+          Erreur : {erreur}
+        </div>
       )}
       <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
         <button
