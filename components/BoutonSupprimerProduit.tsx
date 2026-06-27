@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Trash2 } from 'lucide-react'
 
@@ -10,7 +9,6 @@ interface Props {
 }
 
 export default function BoutonSupprimerProduit({ produitId }: Props) {
-  const router = useRouter()
   const [confirme, setConfirme] = useState(false)
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
@@ -36,8 +34,7 @@ export default function BoutonSupprimerProduit({ produitId }: Props) {
       const { error } = await supabase.from('produits').delete().eq('id', produitId)
       if (error) throw new Error(error.message)
 
-      router.push('/produits')
-      router.refresh()
+      window.location.href = '/produits'
     } catch (err: any) {
       setErreur(err.message || 'Erreur lors de la suppression')
       setChargement(false)
