@@ -6,7 +6,7 @@ async function getData(annee: number) {
   const [{ data: ventes }, { data: paiements }] = await Promise.all([
     supabase
       .from('ventes')
-      .select('prix_vente_reel, quantite_vendue, date_vente')
+      .select('prix_vente_reel, quantite_vendue, marge_nette, date_vente, mode_paiement, canal')
       .gte('date_vente', `${annee}-01-01`)
       .lte('date_vente', `${annee}-12-31`),
     supabase
@@ -15,31 +15,48 @@ async function getData(annee: number) {
       .eq('annee', annee),
   ])
 
-  const caParTrimestre = [0, 0, 0, 0]
+  const donneesParMois = Array.from({ length: 12 }, () => ({
+    ca: 0, marge: 0, nbVentes: 0, nbArticles: 0,
+    especes: 0, carte: 0, direct: 0, lieux: 0,
+  }))
+
   for (const v of (ventes || [])) {
     const mois = new Date(v.date_vente).getMonth()
-    const t = Math.floor(mois / 3)
-    caParTrimestre[t] += v.prix_vente_reel * v.quantite_vendue
+    const ca = v.prix_vente_reel * v.quantite_vendue
+    donneesParMois[mois].ca += ca
+    donneesParMois[mois].marge += v.marge_nette
+    donneesParMois[mois].nbVentes += 1
+    donneesParMois[mois].nbArticles += v.quantite_vendue
+    if (v.mode_paiement === 'carte') donneesParMois[mois].carte += ca
+    else donneesParMois[mois].especes += ca
+    if (v.canal === 'revendeur') donneesParMois[mois].lieux += ca
+    else donneesParMois[mois].direct += ca
   }
 
-  return { caParTrimestre, paiements: paiements || [] }
+  return { donneesParMois, paiements: paiements || [] }
 }
 
-export default async function URSSAFPage() {
-  const annee = new Date().getFullYear()
-  const { caParTrimestre, paiements } = await getData(annee)
+export default async function URSSAFPage({ searchParams }: { searchParams: { annee?: string } }) {
+  const anneeActuelle = new Date().getFullYear()
+  const annee = parseInt(searchParams.annee || '') || anneeActuelle
+  const { donneesParMois, paiements } = await getData(annee)
 
   return (
     <div className="page-container" style={{ maxWidth: 720 }}>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Suivi URSSAF</h1>
+          <h1 className="page-title">Récap mensuel</h1>
           <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', marginTop: 4 }}>
-            Cotisations {annee} — micro-entreprise vente de marchandises
+            CA · Marge · URSSAF · Modes de paiement · Canaux de vente
           </p>
         </div>
       </div>
-      <SuiviURSSAF annee={annee} caParTrimestre={caParTrimestre} paiements={paiements} />
+      <SuiviURSSAF
+        annee={annee}
+        anneeActuelle={anneeActuelle}
+        donneesParMois={donneesParMois}
+        paiements={paiements}
+      />
     </div>
   )
 }

@@ -9,7 +9,7 @@ const liens = [
   { href: '/ajouter',    label: 'Ajouter',   icone: PlusCircle },
   { href: '/ventes',     label: 'Ventes',    icone: ShoppingBag },
   { href: '/stats',      label: 'Stats',     icone: BarChart2 },
-  { href: '/urssaf',     label: 'URSSAF',    icone: Receipt },
+  { href: '/urssaf',     label: 'Récap',     icone: Receipt },
   { href: '/parametres', label: 'Réglages',  icone: Settings },
 ]
 
