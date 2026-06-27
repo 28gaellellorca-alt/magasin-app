@@ -28,6 +28,7 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
     canal: 'direct',
     revendeur_id: '',
     quantite_vendue: '1',
+    acheteur: '',
     notes: '',
   })
 
@@ -66,6 +67,7 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
         revendeur_id: form.canal === 'revendeur' ? form.revendeur_id || null : null,
         marge_nette: margeAEnregistrer,
         photo_url: photoUrl || null,
+        acheteur: form.acheteur.trim() || null,
         date_vente: new Date().toISOString(),
         notes: form.notes.trim() || null,
       })
@@ -154,10 +156,17 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
           </div>
         )}
 
-        <div className="form-group">
-          <label className="form-label">Notes (facultatif)</label>
-          <input className="form-input" type="text" placeholder="Ex : vendu au marché de Noël"
-            value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className="form-group">
+            <label className="form-label">Acheteur (facultatif)</label>
+            <input className="form-input" type="text" placeholder="Ex : Marie"
+              value={form.acheteur} onChange={e => setForm(f => ({ ...f, acheteur: e.target.value }))} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Notes (facultatif)</label>
+            <input className="form-input" type="text" placeholder="Ex : marché de Noël"
+              value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+          </div>
         </div>
 
         {erreur && (
