@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Package, ChevronDown, ChevronUp } from 'lucide-react'
+import { Package, ChevronDown, ChevronUp, Search, X } from 'lucide-react'
 
 interface Props {
   produits: any[]
@@ -119,15 +119,45 @@ function CarteInfo({ p }: { p: any }) {
 export default function CartesProduits({ produits, categories }: Props) {
   const [catFiltre, setCatFiltre] = useState('')
   const [etatFiltre, setEtatFiltre] = useState('')
+  const [recherche, setRecherche] = useState('')
+
+  const termes = recherche.toLowerCase().trim().split(/\s+/).filter(Boolean)
 
   const filtres = produits.filter(p => {
     if (catFiltre && p.categorie_id !== catFiltre) return false
     if (etatFiltre && p.etat !== etatFiltre) return false
+    if (termes.length > 0) {
+      const texte = [p.nom, p.categorie?.nom, p.sous_categorie?.nom, p.notes].filter(Boolean).join(' ').toLowerCase()
+      if (!termes.every(t => texte.includes(t))) return false
+    }
     return true
   })
 
   return (
     <>
+      {/* Barre de recherche */}
+      <div style={{ position: 'relative', marginBottom: 'var(--space-3)' }}>
+        <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
+        <input
+          className="form-input"
+          type="text"
+          placeholder="Rechercher un article (nom, catégorie, notes…)"
+          value={recherche}
+          onChange={e => setRecherche(e.target.value)}
+          style={{ paddingLeft: 40, paddingRight: recherche ? 40 : 14 }}
+        />
+        {recherche && (
+          <button
+            onClick={() => setRecherche('')}
+            style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', padding: 4 }}
+            aria-label="Effacer la recherche"
+          >
+            <X size={16} />
+          </button>
+        )}
+      </div>
+
+      {/* Filtres catégorie + état */}
       <div style={{ display: 'flex', gap: 'var(--space-3)', marginBottom: 'var(--space-5)', flexWrap: 'wrap' }}>
         <select className="form-input" style={{ width: 'auto', minWidth: 160 }} value={catFiltre} onChange={e => setCatFiltre(e.target.value)}>
           <option value="">Toutes les catégories</option>
@@ -141,15 +171,22 @@ export default function CartesProduits({ produits, categories }: Props) {
           <option value="vendu">Vendu</option>
           <option value="reserve">Réservé</option>
         </select>
+        {(recherche || catFiltre || etatFiltre) && (
+          <span style={{ alignSelf: 'center', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+            {filtres.length} résultat{filtres.length > 1 ? 's' : ''}
+          </span>
+        )}
       </div>
 
       {filtres.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }}>
           <Package size={48} strokeWidth={1} style={{ margin: '0 auto var(--space-4)' }} />
-          <p>Aucun article trouvé.</p>
-          <Link href="/ajouter" className="btn btn-primary" style={{ marginTop: 'var(--space-4)' }}>
-            Ajouter un article
-          </Link>
+          <p>{recherche ? `Aucun article pour "${recherche}".` : 'Aucun article trouvé.'}</p>
+          {!recherche && (
+            <Link href="/ajouter" className="btn btn-primary" style={{ marginTop: 'var(--space-4)' }}>
+              Ajouter un article
+            </Link>
+          )}
         </div>
       ) : (
         <div className="grid-products">
