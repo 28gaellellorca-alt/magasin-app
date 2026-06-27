@@ -8,7 +8,7 @@ interface Props {
   photoUrl: string | null
 }
 
-export default function BoutonSupprimerProduit({ produitId }: Props) {
+export default function BoutonSupprimerProduit({ produitId, photoUrl }: Props) {
   const [confirme, setConfirme] = useState(false)
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
@@ -28,9 +28,14 @@ export default function BoutonSupprimerProduit({ produitId }: Props) {
     setChargement(true)
     setErreur('')
     try {
-      // La photo reste dans Supabase Storage intentionnellement —
-      // elle est référencée dans l'historique des ventes (colonne photo_url).
-      // Supprimer le produit (les ventes gardent leur photo_url même si produit_id passe à NULL)
+      // Si aucune vente, supprimer aussi la photo de Supabase Storage
+      if (nbVentes === 0 && photoUrl) {
+        const chemin = photoUrl.split('/images de produits/')[1]
+        if (chemin) {
+          await supabase.storage.from('images de produits').remove([chemin])
+        }
+      }
+
       const { error } = await supabase.from('produits').delete().eq('id', produitId)
       if (error) throw new Error(error.message)
 
