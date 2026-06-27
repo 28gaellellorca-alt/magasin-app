@@ -1,6 +1,5 @@
 'use client'
 import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Upload, X, Calculator, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
@@ -14,7 +13,6 @@ function euro(val: number) {
 interface Props { produit: any; categories: any[]; sousCategories: any[] }
 
 export default function FormulaireModifier({ produit, categories, sousCategories }: Props) {
-  const router = useRouter()
   const inputFichier = useRef<HTMLInputElement>(null)
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
@@ -26,10 +24,10 @@ export default function FormulaireModifier({ produit, categories, sousCategories
     nom: produit.nom,
     categorie_id: produit.categorie_id || '',
     sous_categorie_id: produit.sous_categorie_id || '',
-    prix_achat: produit.prix_achat.toString(),
-    frais_annexes: produit.frais_annexes.toString(),
-    prix_vente_souhaite: produit.prix_vente_souhaite.toString(),
-    quantite: produit.quantite.toString(),
+    prix_achat: (produit.prix_achat ?? 0).toString(),
+    frais_annexes: (produit.frais_annexes ?? 0).toString(),
+    prix_vente_souhaite: (produit.prix_vente_souhaite ?? 0).toString(),
+    quantite: (produit.quantite ?? 1).toString(),
     etat: produit.etat,
     notes: produit.notes || '',
   })
@@ -90,8 +88,7 @@ export default function FormulaireModifier({ produit, categories, sousCategories
       }).eq('id', produit.id)
       if (error) throw new Error(error.message)
 
-      router.push(`/produits/${produit.id}`)
-      router.refresh()
+      window.location.href = `/produits/${produit.id}`
     } catch (err: any) {
       setErreur(err.message || 'Une erreur est survenue.')
     } finally {

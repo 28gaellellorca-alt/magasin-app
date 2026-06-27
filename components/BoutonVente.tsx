@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ShoppingBag, CreditCard, Banknote } from 'lucide-react'
 
@@ -19,12 +18,11 @@ function euro(val: number) {
 }
 
 export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouhaite, prixRevient, quantiteDisponible, revendeurs }: Props) {
-  const router = useRouter()
   const [ouvert, setOuvert] = useState(false)
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
   const [form, setForm] = useState({
-    prix_vente_reel: prixSouhaite.toFixed(2),
+    prix_vente_reel: (prixSouhaite || 0).toFixed(2),
     canal: 'direct',
     revendeur_id: '',
     quantite_vendue: '1',
@@ -95,8 +93,7 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
         .eq('id', produitId)
       if (errProduit) throw new Error(errProduit.message || errProduit.details || 'Erreur mise à jour stock')
 
-      setOuvert(false)
-      router.refresh()
+      window.location.reload()
     } catch (err: any) {
       setErreur(err?.message || 'Erreur inconnue')
       console.error('Erreur vente:', err)
