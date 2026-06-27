@@ -1,17 +1,15 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Trash2 } from 'lucide-react'
 
 interface Props {
   venteId: string
-  produitId: string
+  produitId: string | null
   quantiteVendue: number
 }
 
 export default function BoutonAnnulerVente({ venteId, produitId, quantiteVendue }: Props) {
-  const router = useRouter()
   const [confirme, setConfirme] = useState(false)
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
@@ -20,33 +18,29 @@ export default function BoutonAnnulerVente({ venteId, produitId, quantiteVendue 
     setChargement(true)
     setErreur('')
     try {
-      // 1. Récupérer le stock actuel du produit
-      const { data: produit, error: errLecture } = await supabase
-        .from('produits')
-        .select('quantite, etat')
-        .eq('id', produitId)
-        .single()
-      if (errLecture) throw new Error(errLecture.message)
+      // Si le produit existe encore, remettre le stock avant de supprimer la vente
+      if (produitId) {
+        const { data: produit, error: errLecture } = await supabase
+          .from('produits')
+          .select('quantite')
+          .eq('id', produitId)
+          .single()
+        if (errLecture) throw new Error(errLecture.message)
 
-      // 2. Supprimer la vente
+        const { error: errUpdate } = await supabase
+          .from('produits')
+          .update({ quantite: (produit.quantite || 0) + quantiteVendue, etat: 'disponible' })
+          .eq('id', produitId)
+        if (errUpdate) throw new Error(errUpdate.message)
+      }
+
       const { error: errDelete } = await supabase
         .from('ventes')
         .delete()
         .eq('id', venteId)
       if (errDelete) throw new Error(errDelete.message)
 
-      // 3. Remettre le stock
-      const nouvelleQuantite = (produit.quantite || 0) + quantiteVendue
-      const { error: errUpdate } = await supabase
-        .from('produits')
-        .update({
-          quantite: nouvelleQuantite,
-          etat: 'disponible',
-        })
-        .eq('id', produitId)
-      if (errUpdate) throw new Error(errUpdate.message)
-
-      router.refresh()
+      window.location.href = '/ventes'
     } catch (err: any) {
       setErreur(err.message || 'Erreur lors de l\'annulation')
       setChargement(false)
