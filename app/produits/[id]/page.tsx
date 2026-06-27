@@ -18,15 +18,6 @@ async function getProduit(id: string) {
   return data
 }
 
-async function getPrixLieu(produitId: string) {
-  try {
-    const { data } = await supabase.from('prix_lieu').select('revendeur_id, prix_vente').eq('produit_id', produitId)
-    return data || []
-  } catch {
-    return []
-  }
-}
-
 async function getVentes(produitId: string) {
   const { data } = await supabase
     .from('ventes')
@@ -34,11 +25,15 @@ async function getVentes(produitId: string) {
     .eq('produit_id', produitId)
     .order('date_vente', { ascending: false })
   return data || []
-
 }
 
 async function getRevendeurs() {
   const { data } = await supabase.from('revendeurs').select('*').order('nom')
+  return data || []
+}
+
+async function getPrixLieu(produitId: string) {
+  const { data } = await supabase.from('prix_lieu').select('revendeur_id, prix_vente').eq('produit_id', produitId)
   return data || []
 }
 
@@ -85,7 +80,7 @@ export default async function FicheProduit({ params }: { params: { id: string } 
             {produit.categorie && <span className="badge badge-primary">{produit.categorie.nom}</span>}
             {produit.sous_categorie && <span className="badge badge-neutral">{produit.sous_categorie.nom}</span>}
             <span className={`badge ${produit.etat === 'disponible' ? 'badge-success' : produit.etat === 'vendu' ? 'badge-neutral' : 'badge-warning'}`}>
-              {produit.etat === 'disponible' ? 'Disponible' : produit.etat === 'vendu' ? 'Vendu' : 'Réservé'}
+              {produit.etat === 'disponible' ? 'Disponible' : produit.etat === 'vendu' ? 'Vendu' : 'Reserve'}
             </span>
           </div>
         </div>
@@ -97,10 +92,9 @@ export default async function FicheProduit({ params }: { params: { id: string } 
         </div>
       </div>
 
-      {/* Bloc marges */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-5)' }}>
         <div className="stat-card">
-          <div className="stat-label">Prix d'achat</div>
+          <div className="stat-label">Prix achat</div>
           <div className="stat-value">{euro(produit.prix_achat)}</div>
         </div>
         <div className="stat-card">
@@ -112,7 +106,7 @@ export default async function FicheProduit({ params }: { params: { id: string } 
           <div className="stat-value" style={{ color: 'var(--color-primary)' }}>{euro(produit.prix_revient)}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Prix de vente souhaité</div>
+          <div className="stat-label">Prix souhaite</div>
           <div className="stat-value">{euro(produit.prix_vente_souhaite)}</div>
         </div>
         <div className="stat-card">
@@ -123,7 +117,7 @@ export default async function FicheProduit({ params }: { params: { id: string } 
           <div className="stat-sub">{margePct}% du prix de revient</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Quantité</div>
+          <div className="stat-label">Quantite</div>
           <div className="stat-value">{produit.quantite}</div>
         </div>
       </div>
@@ -189,7 +183,7 @@ export default async function FicheProduit({ params }: { params: { id: string } 
                     )}
                     <div>
                       <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
-                        {new Date(v.date_vente).toLocaleDateString('fr-FR')} — {v.canal === 'direct' ? 'Vente directe' : `Via ${v.revendeur?.nom || 'lieu de vente'}`}
+                        {new Date(v.date_vente).toLocaleDateString('fr-FR')} {v.canal === 'direct' ? 'Vente directe' : `Via ${v.revendeur?.nom || 'lieu de vente'}`}
                       </div>
                       <div className="card-meta">{v.quantite_vendue} article{v.quantite_vendue > 1 ? 's' : ''}</div>
                     </div>
