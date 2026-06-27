@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Upload, X, Calculator } from 'lucide-react'
 import Image from 'next/image'
+import { compresserImage } from '@/lib/compresserImage'
 
 const SUGGESTIONS: Record<string, string[]> = {
   'Bijoux':         ['collier', 'bracelet', 'bague', 'boucle', 'pendentif', 'bijou', 'perle', 'chaîne'],
@@ -82,11 +83,11 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
       let photo_url: string | null = null
 
       if (fichierPhoto) {
-        const ext = fichierPhoto.name.split('.').pop()
-        const nomFichier = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const photoCompressée = await compresserImage(fichierPhoto)
+        const nomFichier = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
         const { error: errUpload } = await supabase.storage
           .from('images de produits')
-          .upload(nomFichier, fichierPhoto, { cacheControl: '3600', upsert: false })
+          .upload(nomFichier, photoCompressée, { cacheControl: '3600', upsert: false })
         if (errUpload) throw new Error('Erreur upload photo : ' + errUpload.message)
         const { data: urlData } = supabase.storage.from('images de produits').getPublicUrl(nomFichier)
         photo_url = urlData.publicUrl

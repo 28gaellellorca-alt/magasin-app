@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Upload, X, Calculator, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
+import { compresserImage } from '@/lib/compresserImage'
 import Link from 'next/link'
 
 function euro(val: number) {
@@ -65,9 +66,9 @@ export default function FormulaireModifier({ produit, categories, sousCategories
       let photo_url = supprimerPhoto ? null : produit.photo_url
 
       if (fichierPhoto) {
-        const ext = fichierPhoto.name.split('.').pop()
-        const nomFichier = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-        const { error: errUpload } = await supabase.storage.from('images de produits').upload(nomFichier, fichierPhoto, { cacheControl: '3600' })
+        const photoCompressée = await compresserImage(fichierPhoto)
+        const nomFichier = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+        const { error: errUpload } = await supabase.storage.from('images de produits').upload(nomFichier, photoCompressée, { cacheControl: '3600' })
         if (errUpload) throw new Error('Erreur upload : ' + errUpload.message)
         const { data: urlData } = supabase.storage.from('images de produits').getPublicUrl(nomFichier)
         photo_url = urlData.publicUrl
