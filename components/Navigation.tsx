@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, PlusCircle, ShoppingBag, BarChart2, Settings } from 'lucide-react'
+import { LayoutDashboard, Package, PlusCircle, ShoppingBag, BarChart2, Settings, Receipt } from 'lucide-react'
 
 const liens = [
   { href: '/',           label: 'Accueil',   icone: LayoutDashboard },
@@ -9,6 +9,7 @@ const liens = [
   { href: '/ajouter',    label: 'Ajouter',   icone: PlusCircle },
   { href: '/ventes',     label: 'Ventes',    icone: ShoppingBag },
   { href: '/stats',      label: 'Stats',     icone: BarChart2 },
+  { href: '/urssaf',     label: 'URSSAF',    icone: Receipt },
   { href: '/parametres', label: 'Réglages',  icone: Settings },
 ]
 
