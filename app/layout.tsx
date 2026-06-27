@@ -11,7 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr">
       <body>
-        <main>
+        <main className="page-container">
           {children}
         </main>
         <Navigation />
