@@ -115,7 +115,7 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
         .update({
           quantite: nouvelleQuantite,
           etat: nouvelleQuantite <= 0 ? 'vendu' : 'disponible',
-          ...(nouvelleQuantite <= 0 ? { lieu_depot_id: null } : {}),
+          ...(nouvelleQuantite <= 0 ? { lieu_depot_id: null, quantite_en_depot: 0 } : {}),
         })
         .eq('id', produitId)
       if (errProduit) throw new Error(errProduit.message || errProduit.details || 'Erreur mise à jour stock')

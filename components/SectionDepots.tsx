@@ -13,9 +13,10 @@ export default function SectionDepots({ produits }: { produits: any[] }) {
     if (!p.lieu_depot) continue
     const id = p.lieu_depot.id
     const e = parLieu.get(id) || { nom: p.lieu_depot.nom, items: [] as any[], valeur: 0, quantite: 0 }
-    e.items.push(p)
-    e.valeur += (p.prix_vente_souhaite || 0) * (p.quantite || 0)
-    e.quantite += p.quantite || 0
+    const qteDepot = p.quantite_en_depot || p.quantite || 0
+    e.items.push({ ...p, qteDepot })
+    e.valeur += (p.prix_vente_souhaite || 0) * qteDepot
+    e.quantite += qteDepot
     parLieu.set(id, e)
   }
 
@@ -51,10 +52,13 @@ export default function SectionDepots({ produits }: { produits: any[] }) {
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 500, fontSize: 'var(--text-sm)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom}</div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Qté : {p.quantite}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                    {p.qteDepot} déposé{p.qteDepot > 1 ? 's' : ''}
+                    {p.quantite > p.qteDepot ? ` · ${p.quantite - p.qteDepot} chez toi` : ''}
+                  </div>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--color-warning)' }}>{euro((p.prix_vente_souhaite || 0) * (p.quantite || 0))}</div>
+                  <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--color-warning)' }}>{euro((p.prix_vente_souhaite || 0) * p.qteDepot)}</div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>à {euro(p.prix_vente_souhaite || 0)} / art.</div>
                 </div>
               </div>

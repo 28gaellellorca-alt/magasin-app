@@ -6,7 +6,7 @@ import SectionDepots from '@/components/SectionDepots'
 async function getProduitsEnDepot() {
   const { data } = await supabase
     .from('produits')
-    .select('id, nom, photo_url, quantite, prix_vente_souhaite, lieu_depot:revendeurs(id, nom)')
+    .select('id, nom, photo_url, quantite, quantite_en_depot, prix_vente_souhaite, lieu_depot:revendeurs(id, nom)')
     .not('lieu_depot_id', 'is', null)
     .eq('etat', 'disponible')
   return data || []
