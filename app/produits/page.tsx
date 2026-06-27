@@ -8,7 +8,7 @@ async function getProduits() {
   const { data } = await supabase
     .from('produits')
     .select('*, categorie:categories(nom), sous_categorie:sous_categories(nom)')
-    .order('created_at', { ascending: false })
+    .order('nom', { ascending: true })
   return data || []
 }
 
