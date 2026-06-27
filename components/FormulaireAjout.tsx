@@ -93,7 +93,7 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
         photo_url = urlData.publicUrl
       }
 
-      const { error } = await supabase.from('produits').insert({
+      const { data: inserted, error } = await supabase.from('produits').insert({
         nom: form.nom.trim(),
         categorie_id: form.categorie_id || null,
         sous_categorie_id: form.sous_categorie_id || null,
@@ -105,8 +105,9 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
         etat: form.etat,
         notes: form.notes.trim() || null,
         photo_url,
-      })
+      }).select('id')
       if (error) throw new Error(error.message)
+      if (!inserted || inserted.length === 0) throw new Error('Sauvegarde bloquée par Supabase (permissions RLS). Voir la procédure dans l\'app.')
       setNomEnregistre(form.nom.trim())
       setSucces(true)
     } catch (err: any) {
