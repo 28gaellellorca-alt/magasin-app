@@ -1,4 +1,5 @@
-﻿import { supabase } from '@/lib/supabase'
+﻿export const dynamic = 'force-dynamic'
+import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
