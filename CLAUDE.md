@@ -12,6 +12,23 @@ Application web de gestion de stock pour une boutique artisanale fait main ("Les
 
 ---
 
+## Version stable de référence
+
+Le tag Git `v1-stable` marque la version fonctionnelle du 28 juin 2026 (commit `d569e81`).
+En cas de régression grave, revenir à cette version avec :
+
+```bash
+git checkout v1-stable
+```
+
+Pour revenir sur la version de développement :
+
+```bash
+git checkout main
+```
+
+---
+
 ## Reprendre le travail (même ordinateur)
 
 Pour relancer le projet après une pause :
