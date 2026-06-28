@@ -236,3 +236,21 @@ Navigation responsive : sidebar fixe à gauche sur desktop (≥ 768px), header +
 - **Tables créées via SQL Editor** : nécessitent un `GRANT SELECT, INSERT, UPDATE, DELETE ON <table> TO anon, authenticated;` explicite (contrairement au Table Editor qui l'accorde automatiquement)
 - **NE PAS utiliser la jointure `lieu_depot:revendeurs(id, nom)` dans getProduit** : cette jointure cause des 404 sur toutes les fiches produit depuis la création de la table prix_lieu (rechargement du cache schema Supabase). A la place, récupérer lieu_depot manuellement depuis la liste revendeurs déjà chargée : `revendeurs.find(r => r.id === produit.lieu_depot_id)`
 - **export const dynamic = 'force-dynamic'** : obligatoire sur toutes les pages serveur pour éviter la mise en cache Vercel
+
+---
+
+## Roadmap — fonctionnalités à venir
+
+### 1. Événements (priorité haute — en cours)
+Chaque participation à un marché = un événement avec son propre bilan.
+Table prévue : `evenements` (date, nom, revendeur_id, cout_emplacement, transport, autres_frais, notes).
+Objectif : afficher le bénéfice net réel par événement dans les Stats (CA − commissions − frais d'entrée − coûts événement).
+
+### 2. Dépenses générales
+Frais non liés à une vente : emballages, matières premières, fournitures.
+Table prévue : `depenses` (date, montant, categorie, description).
+Impact attendu : marge globale réelle sur le tableau de bord et le récap URSSAF.
+
+### 3. Alertes stock bas
+Seuil minimum par produit. Badge d'alerte sur les cartes et le tableau de bord.
+Migration prévue : `ALTER TABLE produits ADD COLUMN stock_min integer DEFAULT 0;`
