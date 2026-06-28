@@ -134,14 +134,26 @@ function CarteInfo({ p, prixLieu }: { p: any; prixLieu?: number }) {
 
 export default function CartesProduits({ produits, categories, revendeurs, prixLieu }: Props) {
   const [catFiltre, setCatFiltre] = useState('')
+  const [sousCatFiltre, setSousCatFiltre] = useState('')
   const [etatFiltre, setEtatFiltre] = useState('')
   const [recherche, setRecherche] = useState('')
   const [lieuVue, setLieuVue] = useState('')
+
+  // Sous-catégories disponibles selon la catégorie sélectionnée
+  const sousCatsDisponibles = Array.from(
+    new Map(
+      produits
+        .filter(p => !catFiltre || p.categorie_id === catFiltre)
+        .filter(p => p.sous_categorie_id && p.sous_categorie?.nom)
+        .map(p => [p.sous_categorie_id, p.sous_categorie.nom])
+    ).entries()
+  ).map(([id, nom]) => ({ id, nom })).sort((a, b) => a.nom.localeCompare(b.nom))
 
   const termes = recherche.toLowerCase().trim().split(/\s+/).filter(Boolean)
 
   const filtres = produits.filter(p => {
     if (catFiltre && p.categorie_id !== catFiltre) return false
+    if (sousCatFiltre && p.sous_categorie_id !== sousCatFiltre) return false
     if (etatFiltre && p.etat !== etatFiltre) return false
     if (termes.length > 0) {
       const texte = [p.nom, p.categorie?.nom, p.sous_categorie?.nom, p.notes].filter(Boolean).join(' ').toLowerCase()
@@ -213,21 +225,31 @@ export default function CartesProduits({ produits, categories, revendeurs, prixL
         )}
       </div>
 
-      {/* Filtres catégorie + état */}
+      {/* Filtres catégorie + sous-catégorie + état */}
       <div style={{ display: 'flex', gap: 'var(--space-3)', marginBottom: 'var(--space-5)', flexWrap: 'wrap' }}>
-        <select className="form-input" style={{ width: 'auto', minWidth: 160 }} value={catFiltre} onChange={e => setCatFiltre(e.target.value)}>
+        <select className="form-input" style={{ width: 'auto', minWidth: 160 }} value={catFiltre}
+          onChange={e => { setCatFiltre(e.target.value); setSousCatFiltre('') }}>
           <option value="">Toutes les catégories</option>
           {categories.map((c: any) => (
             <option key={c.id} value={c.id}>{c.nom}</option>
           ))}
         </select>
+        {sousCatsDisponibles.length > 0 && (
+          <select className="form-input" style={{ width: 'auto', minWidth: 160 }} value={sousCatFiltre}
+            onChange={e => setSousCatFiltre(e.target.value)}>
+            <option value="">Toutes les sous-catégories</option>
+            {sousCatsDisponibles.map(sc => (
+              <option key={sc.id} value={sc.id}>{sc.nom}</option>
+            ))}
+          </select>
+        )}
         <select className="form-input" style={{ width: 'auto', minWidth: 140 }} value={etatFiltre} onChange={e => setEtatFiltre(e.target.value)}>
           <option value="">Tous les états</option>
           <option value="disponible">Disponible</option>
           <option value="vendu">Vendu</option>
           <option value="reserve">Réservé</option>
         </select>
-        {(recherche || catFiltre || etatFiltre) && (
+        {(recherche || catFiltre || sousCatFiltre || etatFiltre) && (
           <span style={{ alignSelf: 'center', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
             {filtres.length} résultat{filtres.length > 1 ? 's' : ''}
           </span>
