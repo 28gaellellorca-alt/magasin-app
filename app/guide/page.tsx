@@ -22,7 +22,7 @@ export default function GuidePage() {
             ['#stock', 'Gérer le stock'],
             ['#vente', 'Enregistrer une vente'],
             ['#depot', 'Dépôts en lieu de vente'],
-            ['#lieux', 'Lieux de vente'],
+            ['#marches', 'Marchés & événements'],
             ['#catalogue', 'Catalogue par lieu'],
             ['#ventes', 'Historique des ventes'],
             ['#stats', 'Statistiques'],
@@ -38,18 +38,18 @@ export default function GuidePage() {
 
       {/* 1. Navigation */}
       <Section id="navigation" num="1" titre="Naviguer dans l'application">
-        <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-4)' }}>
+        <p style={pStyle}>
           L'application est accessible sur <strong>magasin-app.vercel.app</strong> depuis n'importe quel appareil (téléphone, tablette, ordinateur).
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)' }}>
           {[
-            ['Accueil', 'Tableau de bord — CA, URSSAF, alertes stock'],
-            ['Stock', 'Tous les articles enregistrés avec filtres'],
-            ['Ajouter', 'Enregistrer un nouvel article'],
-            ['Ventes', 'Historique complet des ventes'],
+            ['Accueil', 'Tableau de bord — CA, URSSAF, alertes stock bas'],
+            ['Stock', 'Tous les articles enregistrés, filtres, ajouter un article'],
+            ['Ventes', 'Historique complet des ventes avec export CSV'],
+            ['Marchés', 'Suivi par lieu de vente — bilan, événements, réglages'],
             ['Stats', 'Statistiques par lieu, catégorie, produit'],
-            ['Récap', 'Suivi mensuel URSSAF et paiements'],
-            ['Réglages', 'Catégories et lieux de vente'],
+            ['Récap', 'Suivi mensuel URSSAF et paiements trimestriels'],
+            ['Réglages', 'Catégories, lieux de vente et catalogues'],
             ['Guide', 'Ce guide !'],
           ].map(([label, desc]) => (
             <div key={label} style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', padding: 'var(--space-3)' }}>
@@ -58,13 +58,13 @@ export default function GuidePage() {
             </div>
           ))}
         </div>
-        <Info>Sur téléphone : barre en bas de l'écran. Sur ordinateur : menu latéral à gauche.</Info>
+        <Info>Sur téléphone : barre en bas de l'écran. Sur ordinateur : menu latéral à gauche. L'onglet "Ajouter un article" est intégré directement dans la page Stock (bouton en haut à droite).</Info>
       </Section>
 
       {/* 2. Ajouter */}
       <Section id="ajouter" num="2" titre="Ajouter un article au stock">
-        <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-3)' }}>
-          Clique sur <strong>Ajouter</strong> dans le menu et remplis le formulaire :
+        <p style={pStyle}>
+          Depuis la page <strong>Stock</strong>, clique sur <strong>"+ Ajouter un article"</strong> en haut à droite. Remplis le formulaire :
         </p>
         <Etapes items={[
           ['Photo', 'Appuie sur la zone pour prendre une photo ou choisir depuis la galerie. Elle est compressée automatiquement.'],
@@ -100,7 +100,8 @@ export default function GuidePage() {
 
       {/* 4. Vente */}
       <Section id="vente" num="4" titre="Enregistrer une vente">
-        <p style={pStyle}>Sur la fiche d'un article disponible, clique sur <strong>"Enregistrer une vente"</strong>.</p>
+        <p style={pStyle}>Tu peux enregistrer une vente de <strong>deux endroits</strong> : depuis la fiche de l'article (page Stock) ou directement depuis le <a href="#catalogue" style={{ color: 'var(--color-primary)' }}>catalogue d'un lieu</a>.</p>
+        <SousTitre>Depuis la fiche d'un article</SousTitre>
         <Etapes items={[
           ['Prix par article', 'Pré-rempli avec ton prix souhaité. Tu peux le modifier directement.'],
           ['Quantité', 'Combien d\'exemplaires vendus en une fois.'],
@@ -119,75 +120,142 @@ export default function GuidePage() {
 
       {/* 5. Dépôt */}
       <Section id="depot" num="5" titre="Déposer des articles dans un lieu de vente">
-        <p style={pStyle}>Si tu déposes des articles chez un revendeur ou pour un événement, utilise la fonction dépôt pour suivre le stock immobilisé séparément.</p>
-        <SousTitre>Faire un dépôt</SousTitre>
+        <p style={pStyle}>Si tu déposes des articles chez un revendeur ou pour un événement, utilise la fonction dépôt pour suivre le stock immobilisé séparément du reste.</p>
+        <Info>Le dépôt ne retire pas le stock total — il précise combien sont <em>chez le lieu</em> (par opposition à chez toi). Ex : 16 articles au total dont 15 en dépôt chez Kermesse Vava · 1 chez toi.</Info>
+
+        <SousTitre>Méthode 1 — Depuis la fiche de l'article</SousTitre>
         <Etapes items={[
           ['Ouvre la fiche du produit', 'Clique sur l\'article depuis la page Stock.'],
-          ['Clique sur "Déposer dans un lieu"', 'Le bouton apparaît si l\'article est disponible.'],
-          ['Choisis le lieu et la quantité', 'Tu peux déposer une partie seulement de ton stock.'],
-          ['Valide', 'Le stock en dépôt est suivi séparément de ton stock général.'],
+          ['Clique sur "Déposer chez un lieu de vente"', 'Le bouton apparaît si l\'article est disponible.'],
+          ['Choisis le lieu et la quantité', 'Tu peux déposer une partie seulement du stock.'],
+          ['Valide', 'Le prix est automatiquement ajusté selon le paramétrage du lieu (remise ou augmentation). Le dépôt apparaît dans le catalogue du lieu.'],
         ]} />
+
+        <SousTitre>Méthode 2 — Depuis le catalogue du lieu</SousTitre>
+        <Etapes items={[
+          ['Va dans Marchés', 'Clique sur le lieu concerné, puis sur "Catalogue".'],
+          ['Cherche l\'article dans la liste "Ajouter"', 'En bas de page, tous les articles non encore déposés sont listés.'],
+          ['Clique sur "Déposer"', 'Le bouton orange à droite de chaque article.'],
+          ['Entre la quantité et le prix', 'Le prix suggéré est déjà calculé avec le paramétrage du lieu. Modifie si besoin.'],
+          ['Confirme', 'L\'article passe directement dans la section "En dépôt ici".'],
+        ]} />
+
         <SousTitre>Retour de dépôt</SousTitre>
-        <p style={pStyle}>Sur la fiche produit, le bouton <strong>"Retour de dépôt"</strong> annule le dépôt et remet la quantité dans ton stock disponible.</p>
+        <p style={pStyle}>Tu peux annuler un dépôt depuis <strong>deux endroits</strong> :</p>
+        <ul style={ulStyle}>
+          <li><strong>Fiche de l'article</strong> — Bouton "Tout est rentré (retour de dépôt)"</li>
+          <li><strong>Catalogue du lieu</strong> — Clique sur le <strong>X</strong> à côté de l'article dans la section "En dépôt ici"</li>
+        </ul>
         <Astuce>La page Stats affiche en bas une section "Dépôts en cours" avec tous les articles actuellement déposés et leur lieu.</Astuce>
       </Section>
 
-      {/* 6. Lieux */}
-      <Section id="lieux" num="6" titre="Gérer les lieux de vente">
-        <p style={pStyle}>Va dans <strong>Réglages</strong> pour créer et gérer tes marchés, kermesses, revendeurs…</p>
-        <SousTitre>Créer un lieu</SousTitre>
-        <p style={pStyle}>Remplis le formulaire en bas de la section "Lieux de vente" :</p>
+      {/* 6. Marchés */}
+      <Section id="marches" num="6" titre="Marchés & événements">
+        <p style={pStyle}>La page <strong>Marchés</strong> centralise tout ce que tu sais sur tes lieux de vente : bilan financier, historique des passages, réglages et catalogue.</p>
+
+        <SousTitre>Vue d'ensemble</SousTitre>
+        <p style={pStyle}>Chaque lieu de vente est listé avec :</p>
+        <ul style={ulStyle}>
+          <li>Le nombre d'événements passés</li>
+          <li>Le CA total généré sur ce lieu</li>
+          <li>Le bénéfice net (après déduction des frais de chaque événement)</li>
+          <li>La date du dernier passage</li>
+        </ul>
+
+        <SousTitre>Fiche d'un lieu</SousTitre>
+        <p style={pStyle}>Clique sur un lieu pour ouvrir sa fiche complète :</p>
         <table style={tableStyle}>
           <thead>
             <tr>
-              <th style={thStyle}>Type de frais</th>
-              <th style={thStyle}>Quand l'utiliser</th>
-              <th style={thStyle}>Exemple</th>
+              <th style={thStyle}>Partie</th>
+              <th style={thStyle}>Ce que tu peux faire</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td style={tdStyle}>% sur chaque vente</td>
-              <td style={tdStyle}>Le lieu prend un pourcentage de tes ventes</td>
-              <td style={tdStyle}>15% du CA</td>
-            </tr>
-            <tr>
-              <td style={tdStyle}>Montant fixe par article</td>
-              <td style={tdStyle}>Un montant déduit par article vendu</td>
-              <td style={tdStyle}>2€ par article</td>
-            </tr>
-            <tr>
-              <td style={tdStyle}>Frais d'entrée</td>
-              <td style={tdStyle}>Tu paies un forfait pour participer (table, emplacement)</td>
-              <td style={tdStyle}>50€ pour la journée</td>
-            </tr>
+            {[
+              ['Stats globales', 'CA total, frais cumulés, bénéfice net, nombre de ventes'],
+              ['Réglages', 'Modifier le nom, les frais (% / fixe / entrée) et l\'ajustement auto des prix (remise ou augmentation, en % ou en €)'],
+              ['Événements', 'Voir le bilan de chaque passage : CA, bénéfice brut, frais, bénéfice net, ventes rattachées'],
+              ['Catalogue', 'Accès direct aux articles en dépôt et au catalogue du lieu'],
+            ].map(([p, d]) => (
+              <tr key={p}>
+                <td style={tdStyle}><strong>{p}</strong></td>
+                <td style={tdStyle}>{d}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
-        <p style={{ ...pStyle, marginTop: 'var(--space-3)' }}><strong>Ajustement auto</strong> — Si tu vends toujours moins cher (ou plus cher) sur ce lieu, configure une remise ou une augmentation automatique en %. Elle s'applique dès que tu sélectionnes ce lieu dans le formulaire de vente.</p>
-        <SousTitre>Modifier un lieu</SousTitre>
-        <p style={pStyle}>Clique sur l'icône <strong>crayon</strong> à droite du lieu pour modifier ses informations.</p>
-        <SousTitre>Supprimer un lieu</SousTitre>
-        <p style={pStyle}>Clique sur la corbeille. Les ventes enregistrées sur ce lieu sont conservées dans l'historique avec le nom du lieu, même après suppression.</p>
+
+        <SousTitre>Enregistrer un événement</SousTitre>
+        <Etapes items={[
+          ['Ouvre la fiche du lieu', 'Clique sur le lieu depuis la page Marchés.'],
+          ['Clique "Nouvel événement"', 'Remplis le nom, la date et les frais (emplacement, transport, autres).'],
+          ['Enregistre', 'L\'événement apparaît dans la liste avec son bilan automatique. Les ventes enregistrées ce jour-là sur ce lieu sont rattachées automatiquement.'],
+        ]} />
+        <Info>Pour que les ventes soient rattachées à un événement, elles doivent avoir été enregistrées <strong>le même jour</strong> que la date de l'événement <strong>et</strong> sur le même lieu.</Info>
+
+        <SousTitre>Ajustement automatique des prix (% ou €)</SousTitre>
+        <p style={pStyle}>Dans les réglages d'un lieu, configure un ajustement qui s'applique automatiquement à chaque vente sur ce lieu :</p>
+        <ul style={ulStyle}>
+          <li><strong>Remise</strong> — Tu vends moins cher sur ce lieu (ex : kermesse scolaire). Ex : Remise de 10%</li>
+          <li><strong>Augmentation</strong> — Tu majores les prix sur ce lieu (ex : marché de créateurs). Ex : Augmentation de 30%</li>
+          <li><strong>En % ou en €</strong> — Choisis l'unité qui correspond à ta pratique</li>
+        </ul>
+        <Astuce>L'ajustement s'applique aussi automatiquement au prix calculé lors d'un dépôt. Si tu modifies le réglage après, tu peux recalculer tous les prix du catalogue en un clic ("Recalculer tous les prix").</Astuce>
       </Section>
 
       {/* 7. Catalogue */}
       <Section id="catalogue" num="7" titre="Catalogue par lieu de vente">
-        <p style={pStyle}>Pour chaque lieu, tu peux créer un catalogue des articles que tu prévois d'y proposer, avec des prix spécifiques à ce lieu.</p>
-        <SousTitre>Créer le catalogue</SousTitre>
-        <Etapes items={[
-          ['Va dans Réglages', 'Puis clique sur "Catalogue" à côté du lieu concerné.'],
-          ['Ajoute des articles', 'Recherche un article, entre son prix pour ce lieu et clique "Ajouter".'],
-          ['Consulte la liste', 'La section "Dans le catalogue" affiche chaque article avec sa marge calculée au prix du lieu.'],
-          ['Retire un article', 'Clique sur la croix à côté de l\'article pour le retirer du catalogue.'],
-        ]} />
+        <p style={pStyle}>Chaque lieu peut avoir son propre catalogue : liste des articles proposés avec des prix spécifiques à ce lieu. Accès depuis <strong>Marchés → fiche du lieu → Catalogue</strong> ou depuis <strong>Réglages → lien Catalogue</strong>.</p>
+
+        <SousTitre>Ce que tu vois dans le catalogue</SousTitre>
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Section</th>
+              <th style={thStyle}>Contenu</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ['En dépôt ici', 'Articles physiquement déposés chez ce lieu, avec la quantité exacte présente, le prix de vente et la marge'],
+              ['Dans le catalogue', 'Articles référencés pour ce lieu (avec prix spécifique) mais pas en dépôt physique'],
+              ['Ajouter des articles', 'Tous les autres articles disponibles — tu peux les ajouter au catalogue ou les déposer directement'],
+            ].map(([p, d]) => (
+              <tr key={p}>
+                <td style={tdStyle}><strong>{p}</strong></td>
+                <td style={tdStyle}>{d}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <SousTitre>Ajouter un article au catalogue</SousTitre>
+        <p style={pStyle}>Dans la section "Ajouter des articles au catalogue", entre le prix pour ce lieu et clique <strong>"+ Ajouter"</strong>. L'article sera listé dans le catalogue sans dépôt physique.</p>
+
+        <SousTitre>Déposer un article directement depuis le catalogue</SousTitre>
+        <p style={pStyle}>À côté de chaque article dans la liste "Ajouter", le bouton <strong>"Déposer"</strong> ouvre un mini-formulaire. Entre la quantité et le prix (pré-rempli avec le calcul automatique), puis confirme. L'article passe directement dans la section "En dépôt ici".</p>
+
+        <SousTitre>Vendre depuis le catalogue</SousTitre>
+        <p style={pStyle}>Sur chaque article en dépôt ou dans le catalogue, le bouton <strong>"Vendre"</strong> ouvre un formulaire rapide (prix, quantité, espèces/carte). La vente est enregistrée et le stock mis à jour automatiquement.</p>
+
+        <SousTitre>Modifier le prix d'un article pour ce lieu</SousTitre>
+        <p style={pStyle}>Clique sur l'icône <strong>crayon</strong> à côté du prix d'un article. Le nouveau prix s'applique uniquement pour ce lieu — le prix normal de l'article n'est pas modifié.</p>
+
+        <SousTitre>Annuler un dépôt depuis le catalogue</SousTitre>
+        <p style={pStyle}>Dans la section "En dépôt ici", clique sur le <strong>X</strong> à droite du bouton Vendre. Après confirmation, le dépôt est annulé et le stock revient chez toi.</p>
+
+        <SousTitre>Recalculer les prix</SousTitre>
+        <p style={pStyle}>Si tu modifies l'ajustement automatique du lieu, le bandeau en haut du catalogue affiche un bouton <strong>"Recalculer tous les prix"</strong> pour mettre à jour tous les articles du catalogue en un clic.</p>
+
         <SousTitre>Aperçu partageable</SousTitre>
-        <p style={pStyle}>Clique sur <strong>"Aperçu partageable"</strong> pour voir une présentation propre de ton catalogue :</p>
+        <p style={pStyle}>Clique sur <strong>"Aperçu partageable"</strong> pour voir une présentation propre du catalogue :</p>
         <ul style={ulStyle}>
           <li>Photo, nom, catégorie, notes et prix de chaque article</li>
           <li>Aucun prix d'achat ni marge visible (confidentiel)</li>
           <li>Bouton "Imprimer ce catalogue" pour générer un PDF à partager</li>
         </ul>
-        <Astuce>Parfait pour envoyer aux organisateurs de marchés qui sélectionnent les artisans, ou pour afficher sur une table lors d'un événement.</Astuce>
+        <Astuce>Parfait pour envoyer aux organisateurs de marchés ou afficher sur une table lors d'un événement.</Astuce>
       </Section>
 
       {/* 8. Historique ventes */}
@@ -216,22 +284,17 @@ export default function GuidePage() {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td style={tdStyle}>Par lieu de vente</td>
-              <td style={tdStyle}>CA brut, frais, bénéfice net et nombre d'événements par lieu — pour voir quels marchés sont les plus rentables</td>
-            </tr>
-            <tr>
-              <td style={tdStyle}>Par catégorie</td>
-              <td style={tdStyle}>CA et marge par catégorie et sous-catégorie avec barre proportionnelle</td>
-            </tr>
-            <tr>
-              <td style={tdStyle}>Top produits</td>
-              <td style={tdStyle}>Les 15 articles qui ont généré le plus de CA sur la période</td>
-            </tr>
-            <tr>
-              <td style={tdStyle}>Dépôts en cours</td>
-              <td style={tdStyle}>Articles actuellement déposés chez un lieu de vente avec la quantité immobilisée</td>
-            </tr>
+            {[
+              ['Par lieu de vente', 'CA brut, frais, bénéfice net et nombre de ventes par lieu — pour voir quels marchés sont les plus rentables'],
+              ['Par catégorie', 'CA et marge par catégorie et sous-catégorie avec barre proportionnelle'],
+              ['Top produits', 'Les 15 articles qui ont généré le plus de CA sur la période'],
+              ['Dépôts en cours', 'Articles actuellement déposés chez un lieu de vente avec la quantité immobilisée'],
+            ].map(([s, d]) => (
+              <tr key={s}>
+                <td style={tdStyle}><strong>{s}</strong></td>
+                <td style={tdStyle}>{d}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </Section>
@@ -278,8 +341,8 @@ export default function GuidePage() {
         <SousTitre>Catégories et sous-catégories</SousTitre>
         <p style={pStyle}>Crée tes propres catégories (Bijoux, Déco, Enfant…) et sous-catégories pour organiser ton stock. Pour supprimer une catégorie, assure-toi qu'aucun article ne l'utilise encore.</p>
         <SousTitre>Lieux de vente</SousTitre>
-        <p style={pStyle}>Gère tous tes marchés, kermesses et revendeurs. Voir la section 6 pour le détail complet.</p>
-        <Info>Les données sont sauvegardées dans le cloud (Supabase) — elles ne se perdent jamais, même si tu changes de téléphone ou d'ordinateur.</Info>
+        <p style={pStyle}>Crée et gère tes marchés, kermesses et revendeurs. Clique sur <strong>"Catalogue"</strong> à côté d'un lieu pour gérer ses articles, ou sur le <strong>crayon</strong> pour modifier ses réglages rapides. Pour le détail complet d'un lieu (événements, bilan, réglages avancés), passe par la page <strong>Marchés</strong>.</p>
+        <Info>Les données sont sauvegardées dans le cloud — elles ne se perdent jamais, même si tu changes de téléphone ou d'ordinateur.</Info>
       </Section>
 
       <div style={{ marginTop: 'var(--space-8)', padding: 'var(--space-4)', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', borderTop: '1px solid var(--color-border)' }}>

@@ -11,7 +11,7 @@ const liens = [
   { href: '/stats',       label: 'Stats',      icone: BarChart2,       mobileOnly: false },
   { href: '/urssaf',      label: 'Récap',      icone: Receipt,         mobileOnly: false },
   { href: '/parametres',  label: 'Réglages',   icone: Settings,        mobileOnly: false },
-  { href: '/guide',       label: 'Guide',      icone: BookOpen,        mobileOnly: true  },
+  { href: '/guide',       label: 'Guide',      icone: BookOpen,        mobileOnly: false },
 ]
 
 function LogoPepitesSidebar() {
