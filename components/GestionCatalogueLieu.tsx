@@ -226,6 +226,12 @@ export default function GestionCatalogueLieu({ lieu, produits, prixLieu: initPri
     setPrixLieu(prev => prev.filter(pl => pl.produit_id !== produitId))
   }
 
+  async function retourDepot(produitId: string) {
+    if (!confirm('Annuler ce dépôt ? Le stock revient chez toi.')) return
+    await supabase.from('produits').update({ lieu_depot_id: null, quantite_en_depot: 0 }).eq('id', produitId)
+    window.location.reload()
+  }
+
   function ouvrirVente(p: any) {
     const prix = getPrix(p.id) ?? prixSuggere(p)
     setFormVente({ prix: prix.toFixed(2), qte: '1', mode: 'especes' })
@@ -369,6 +375,12 @@ export default function GestionCatalogueLieu({ lieu, produits, prixLieu: initPri
                       onClick={() => venteOuverte === p.id ? setVenteOuverte(null) : ouvrirVente(p)}
                     >
                       <ShoppingBag size={14} /> Vendre
+                    </button>
+                    <button
+                      onClick={() => retourDepot(p.id)}
+                      title="Annuler le dépôt — le stock revient chez toi"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', flexShrink: 0, padding: 4 }}>
+                      <X size={18} />
                     </button>
                   </div>
                   {venteOuverte === p.id && (
