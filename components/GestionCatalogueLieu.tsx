@@ -29,6 +29,43 @@ interface Props {
 }
 
 type FormVente = { prix: string; qte: string; mode: 'especes' | 'carte' }
+type FormDepot = { prix: string; qte: string }
+
+function MiniFormDepot({ f, setF, onValider, onAnnuler, chargement, maxQte, prixSuggere }: {
+  f: FormDepot
+  setF: (fn: (prev: FormDepot) => FormDepot) => void
+  onValider: () => void
+  onAnnuler: () => void
+  chargement: boolean
+  maxQte: number
+  prixSuggere: number
+}) {
+  return (
+    <div style={{ background: 'var(--color-warning-light)', border: '1px solid var(--color-warning)', borderRadius: 'var(--radius)', padding: 'var(--space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 'var(--space-2)' }}>
+        <div className="form-group">
+          <label className="form-label" style={{ fontSize: 11 }}>Prix de vente (€)</label>
+          <input className="form-input" type="number" step="0.01" min="0"
+            placeholder={prixSuggere.toFixed(2)}
+            value={f.prix} onChange={e => setF(p => ({ ...p, prix: e.target.value }))}
+            style={{ minHeight: 36 }} />
+        </div>
+        <div className="form-group">
+          <label className="form-label" style={{ fontSize: 11 }}>Qté</label>
+          <input className="form-input" type="number" min="1" max={maxQte} value={f.qte}
+            onChange={e => setF(p => ({ ...p, qte: e.target.value }))} style={{ minHeight: 36 }} />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+        <button className="btn btn-accent" style={{ flex: 1, minHeight: 36, fontSize: 'var(--text-sm)' }}
+          onClick={onValider} disabled={chargement}>
+          <MapPin size={14} /> {chargement ? 'En cours…' : 'Confirmer le dépôt'}
+        </button>
+        <button className="btn btn-secondary" style={{ minHeight: 36 }} onClick={onAnnuler}><X size={14} /></button>
+      </div>
+    </div>
+  )
+}
 
 // Défini HORS du composant parent pour éviter le re-mount
 function MiniFormVente({ f, setF, onValider, onAnnuler, chargement, maxQte }: {
@@ -90,6 +127,28 @@ export default function GestionCatalogueLieu({ lieu, produits, prixLieu: initPri
   const [chargementVente, setChargementVente] = useState(false)
   const [editPrixId, setEditPrixId] = useState<string | null>(null)
   const [editPrixVal, setEditPrixVal] = useState('')
+  const [depotOuvert, setDepotOuvert] = useState<string | null>(null)
+  const [formDepot, setFormDepot] = useState<FormDepot>({ prix: '', qte: '1' })
+  const [chargementDepot, setChargementDepot] = useState(false)
+
+  async function deposerIci(produit: any) {
+    const prixVal = parseFloat(formDepot.prix) || prixSuggere(produit)
+    const qteVal = parseInt(formDepot.qte) || 1
+    if (qteVal <= 0 || qteVal > produit.quantite) return
+    setChargementDepot(true)
+    await Promise.all([
+      supabase.from('produits').update({
+        lieu_depot_id: lieu.id,
+        quantite_en_depot: qteVal,
+      }).eq('id', produit.id),
+      supabase.from('prix_lieu').upsert(
+        { produit_id: produit.id, revendeur_id: lieu.id, prix_vente: parseFloat(prixVal.toFixed(2)) },
+        { onConflict: 'produit_id,revendeur_id' }
+      ),
+    ])
+    setChargementDepot(false)
+    window.location.reload()
+  }
 
   async function enregistrerPrix(produitId: string) {
     const val = parseFloat(editPrixVal)
@@ -425,34 +484,54 @@ export default function GestionCatalogueLieu({ lieu, produits, prixLieu: initPri
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
             {horsCatalogue.map(p => (
-              <div key={p.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3)' }}>
-                {p.photo_url ? (
-                  <Image src={p.photo_url} alt={p.nom} width={56} height={56}
-                    style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 'var(--radius)', flexShrink: 0 }} />
-                ) : (
-                  <div style={{ width: 56, height: 56, background: 'var(--color-primary-light)', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Package size={22} color="var(--color-primary)" strokeWidth={1.5} />
+              <div key={p.id} className="card" style={{ padding: 'var(--space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                  {p.photo_url ? (
+                    <Image src={p.photo_url} alt={p.nom} width={56} height={56}
+                      style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 'var(--radius)', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 56, height: 56, background: 'var(--color-primary-light)', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Package size={22} color="var(--color-primary)" strokeWidth={1.5} />
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 500, fontSize: 'var(--text-sm)' }}>{p.nom}</div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                      {p.categorie?.nom} · Prix normal : {euro(p.prix_vente_souhaite)}
+                    </div>
                   </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
+                    <input className="form-input" type="number" step="0.01" min="0"
+                      placeholder={aAjustement ? prixSuggere(p).toFixed(2) : p.prix_vente_souhaite.toFixed(2)}
+                      value={ajoutEnCours[p.id] || ''}
+                      onChange={e => setAjoutEnCours(prev => ({ ...prev, [p.id]: e.target.value }))}
+                      style={{ width: 90 }} />
+                    <button className="btn btn-primary"
+                      style={{ fontSize: 'var(--text-xs)', minHeight: 36, padding: '4px 12px' }}
+                      onClick={() => ajouterAuCatalogue(p.id)}
+                      disabled={!ajoutEnCours[p.id]}>
+                      <Plus size={14} /> Ajouter
+                    </button>
+                    <button className="btn btn-accent"
+                      style={{ fontSize: 'var(--text-xs)', minHeight: 36, padding: '4px 12px' }}
+                      onClick={() => {
+                        setDepotOuvert(depotOuvert === p.id ? null : p.id)
+                        setFormDepot({ prix: prixSuggere(p).toFixed(2), qte: '1' })
+                      }}>
+                      <MapPin size={14} /> Déposer
+                    </button>
+                  </div>
+                </div>
+                {depotOuvert === p.id && (
+                  <MiniFormDepot
+                    f={formDepot} setF={setFormDepot}
+                    onValider={() => deposerIci(p)}
+                    onAnnuler={() => setDepotOuvert(null)}
+                    chargement={chargementDepot}
+                    maxQte={p.quantite}
+                    prixSuggere={prixSuggere(p)}
+                  />
                 )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 500, fontSize: 'var(--text-sm)' }}>{p.nom}</div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                    {p.categorie?.nom} · Prix normal : {euro(p.prix_vente_souhaite)}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
-                  <input className="form-input" type="number" step="0.01" min="0"
-                    placeholder={aAjustement ? prixSuggere(p).toFixed(2) : p.prix_vente_souhaite.toFixed(2)}
-                    value={ajoutEnCours[p.id] || ''}
-                    onChange={e => setAjoutEnCours(prev => ({ ...prev, [p.id]: e.target.value }))}
-                    style={{ width: 90 }} />
-                  <button className="btn btn-primary"
-                    style={{ fontSize: 'var(--text-xs)', minHeight: 36, padding: '4px 12px' }}
-                    onClick={() => ajouterAuCatalogue(p.id)}
-                    disabled={!ajoutEnCours[p.id]}>
-                    <Plus size={14} /> Ajouter
-                  </button>
-                </div>
               </div>
             ))}
           </div>
