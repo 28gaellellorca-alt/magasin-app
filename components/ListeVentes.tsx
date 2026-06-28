@@ -15,7 +15,7 @@ const FILTRES: { val: Periode; label: string }[] = [
   { val: 'tout',      label: 'Tout' },
 ]
 
-function filtrer(ventes: any[], periode: Periode) {
+function filtrerPeriode(ventes: any[], periode: Periode) {
   if (periode === 'tout') return ventes
   const now = new Date()
   const annee = now.getFullYear()
@@ -27,7 +27,6 @@ function filtrer(ventes: any[], periode: Periode) {
     if (periode === 'annee') return true
     if (periode === 'trimestre') return Math.floor(d.getMonth() / 3) === trimestre
     if (periode === 'mois') return d.getMonth() === mois
-    // semaine : 7 derniers jours
     return (now.getTime() - d.getTime()) <= 7 * 24 * 60 * 60 * 1000
   })
 }
@@ -36,25 +35,52 @@ function euro(val: number) {
   return val.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
 }
 
+function pct(part: number, total: number) {
+  return total > 0 ? Math.round((part / total) * 100) : 0
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 export default function ListeVentes({ ventes }: { ventes: any[] }) {
   const [periode, setPeriode] = useState<Periode>('mois')
+  const [lieuFiltre, setLieuFiltre] = useState<string>('tous')
 
-  const liste = filtrer(ventes, periode)
+  const parPeriode = filtrerPeriode(ventes, periode)
+
+  // Lieux qui apparaissent sur la période
+  const lieuxPeriode = Array.from(
+    new Map(
+      parPeriode
+        .filter(v => v.canal === 'revendeur')
+        .map(v => [v.revendeur_id || 'inconnu', v.revendeur?.nom || v.revendeur_nom || 'Lieu supprimé'])
+    ).entries()
+  ).map(([id, nom]) => ({ id, nom })).sort((a, b) => a.nom.localeCompare(b.nom))
+
+  const liste = lieuFiltre === 'tous'
+    ? parPeriode
+    : lieuFiltre === 'direct'
+      ? parPeriode.filter(v => v.canal === 'direct')
+      : parPeriode.filter(v => v.revendeur_id === lieuFiltre)
+
   const ca = liste.reduce((s, v) => s + v.prix_vente_reel * v.quantite_vendue, 0)
   const marge = liste.reduce((s, v) => s + v.marge_nette, 0)
+  const panierMoyen = liste.length > 0 ? ca / liste.length : 0
+
+  const caEspeces = liste.filter(v => v.mode_paiement !== 'carte').reduce((s, v) => s + v.prix_vente_reel * v.quantite_vendue, 0)
+  const caCarte = ca - caEspeces
+  const caDirect = liste.filter(v => v.canal === 'direct').reduce((s, v) => s + v.prix_vente_reel * v.quantite_vendue, 0)
+  const caLieu = ca - caDirect
 
   return (
     <>
       {/* Filtres période */}
-      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-5)' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-3)', alignItems: 'center' }}>
         {FILTRES.map(f => (
           <button
             key={f.val}
-            onClick={() => setPeriode(f.val)}
+            onClick={() => { setPeriode(f.val); setLieuFiltre('tous') }}
             style={{
               padding: '7px 16px', borderRadius: 'var(--radius-full)',
               border: `1.5px solid ${periode === f.val ? 'var(--color-primary)' : 'var(--color-border)'}`,
@@ -73,19 +99,69 @@ export default function ListeVentes({ ventes }: { ventes: any[] }) {
         </div>
       </div>
 
-      {/* Totaux */}
-      {liste.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
-          <div className="stat-card">
-            <div className="stat-label">CA — {FILTRES.find(f => f.val === periode)?.label}</div>
-            <div className="stat-value" style={{ color: 'var(--color-primary)' }}>{euro(ca)}</div>
-            <div className="stat-sub">{liste.length} vente{liste.length > 1 ? 's' : ''}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Marge</div>
-            <div className="stat-value" style={{ color: 'var(--color-success)' }}>{euro(marge)}</div>
-          </div>
+      {/* Filtre lieu */}
+      {lieuxPeriode.length > 0 && (
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-5)', alignItems: 'center' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontWeight: 500 }}>Canal :</span>
+          {[{ id: 'tous', nom: 'Tous' }, { id: 'direct', nom: 'Vente directe' }, ...lieuxPeriode].map(l => (
+            <button
+              key={l.id}
+              onClick={() => setLieuFiltre(l.id)}
+              style={{
+                padding: '5px 12px', borderRadius: 'var(--radius-full)',
+                border: `1.5px solid ${lieuFiltre === l.id ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                background: lieuFiltre === l.id ? 'var(--color-accent-light)' : 'var(--color-surface)',
+                color: lieuFiltre === l.id ? 'var(--color-accent-dark)' : 'var(--color-text-secondary)',
+                fontWeight: lieuFiltre === l.id ? 600 : 400,
+                fontSize: 'var(--text-xs)', cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+            >
+              {l.nom}
+            </button>
+          ))}
         </div>
+      )}
+
+      {/* Stats */}
+      {liste.length > 0 && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+            <div className="stat-card">
+              <div className="stat-label">CA · {FILTRES.find(f => f.val === periode)?.label}</div>
+              <div className="stat-value" style={{ color: 'var(--color-primary)' }}>{euro(ca)}</div>
+              <div className="stat-sub">{liste.length} vente{liste.length > 1 ? 's' : ''}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Marge nette</div>
+              <div className="stat-value" style={{ color: 'var(--color-success)' }}>{euro(marge)}</div>
+              <div className="stat-sub">{pct(marge, ca)}% du CA</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Panier moyen</div>
+              <div className="stat-value">{euro(panierMoyen)}</div>
+              <div className="stat-sub">par vente</div>
+            </div>
+          </div>
+
+          {/* Répartitions */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)', marginBottom: 'var(--space-6)' }}>
+            <div className="card card-body" style={{ padding: 'var(--space-3)' }}>
+              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-2)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Paiement</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Repartition label="Espèces" montant={caEspeces} pourcent={pct(caEspeces, ca)} couleur="var(--color-warning)" />
+                <Repartition label="Carte" montant={caCarte} pourcent={pct(caCarte, ca)} couleur="var(--color-primary)" />
+              </div>
+            </div>
+            <div className="card card-body" style={{ padding: 'var(--space-3)' }}>
+              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-2)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Canal</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Repartition label="Directe" montant={caDirect} pourcent={pct(caDirect, ca)} couleur="var(--color-success)" />
+                <Repartition label="Lieu de vente" montant={caLieu} pourcent={pct(caLieu, ca)} couleur="var(--color-accent)" />
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Liste */}
@@ -156,5 +232,21 @@ export default function ListeVentes({ ventes }: { ventes: any[] }) {
         </div>
       )}
     </>
+  )
+}
+
+function Repartition({ label, montant, pourcent, couleur }: { label: string; montant: number; pourcent: number; couleur: string }) {
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-xs)', marginBottom: 3 }}>
+        <span style={{ color: 'var(--color-text-secondary)' }}>{label}</span>
+        <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
+          {montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>({pourcent}%)</span>
+        </span>
+      </div>
+      <div style={{ height: 5, background: 'var(--color-border)', borderRadius: 99, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pourcent}%`, background: couleur, borderRadius: 99, transition: 'width 0.4s ease' }} />
+      </div>
+    </div>
   )
 }
