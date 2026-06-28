@@ -19,6 +19,7 @@ Application web de gestion de stock pour une boutique artisanale fait main ("Les
 | `v1-stable` | `d569e81` | 28 juin 2026 | Première version fonctionnelle complète |
 | `v2-stable` | `5a9f9bf` | 28 juin 2026 | Lieux de vente (édition, augmentation auto), catalogue par lieu, aperçu partageable, fournisseur, alertes stock bas, guide intégré |
 | `v3-stable` | `d3fdc36` | 28 juin 2026 | Marchés/événements, fiche produit éditable inline (FicheEditable), badge sous-catégorie sur cartes, sous-catégorie assignable depuis la fiche, import photos WhatsApp en masse |
+| `v4-stable` | `42e69e0` | 28 juin 2026 | Édition directe prix/nom/quantité/photo sur les cartes stock + catégorie éditable inline sur la fiche + champ alerte stock bas |
 
 En cas de régression grave, revenir à une version stable :
 
