@@ -53,6 +53,83 @@ function formDepuisLieu(r: any): FormLieu {
   }
 }
 
+function FormulaireLieu({ f, setF, onValider, onAnnuler, labelBouton, chargement }: {
+  f: FormLieu
+  setF: (fn: (prev: FormLieu) => FormLieu) => void
+  onValider: () => void
+  onAnnuler?: () => void
+  labelBouton: string
+  chargement: boolean
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+      <div className="form-group">
+        <label className="form-label">Nom du lieu</label>
+        <input className="form-input" placeholder="Ex : Marché de Noël, Kermesse École…"
+          value={f.nom} onChange={e => setF(prev => ({ ...prev, nom: e.target.value }))} />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Type de frais</label>
+        <select className="form-input" value={f.commission_type}
+          onChange={e => setF(prev => ({ ...prev, commission_type: e.target.value, commission_valeur: '' }))}>
+          {TYPES_FRAIS.map(t => <option key={t.val} value={t.val}>{t.label}</option>)}
+        </select>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>
+          {TYPES_FRAIS.find(t => t.val === f.commission_type)?.ex}
+        </span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+        <div className="form-group">
+          <label className="form-label">
+            {f.commission_type === 'pourcentage' ? 'Taux (%)' : 'Montant (€)'}
+          </label>
+          <input className="form-input" type="number" step="0.01" min="0"
+            placeholder={f.commission_type === 'pourcentage' ? 'Ex : 15' : 'Ex : 50'}
+            value={f.commission_valeur}
+            onChange={e => setF(prev => ({ ...prev, commission_valeur: e.target.value }))} />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Ajustement auto sur tes prix</label>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
+            {(['remise', 'augmentation'] as const).map(type => (
+              <button key={type} type="button"
+                onClick={() => setF(prev => ({ ...prev, ajustement_type: type }))}
+                style={{
+                  flex: 1, padding: '5px 8px', borderRadius: 'var(--radius)',
+                  border: `2px solid ${f.ajustement_type === type ? (type === 'remise' ? 'var(--color-warning)' : 'var(--color-success)') : 'var(--color-border)'}`,
+                  background: f.ajustement_type === type ? (type === 'remise' ? 'var(--color-warning-light)' : 'var(--color-success-light)') : 'var(--color-surface)',
+                  color: f.ajustement_type === type ? (type === 'remise' ? 'var(--color-warning)' : 'var(--color-success)') : 'var(--color-text-secondary)',
+                  fontWeight: f.ajustement_type === type ? 600 : 400,
+                  cursor: 'pointer', fontSize: 'var(--text-xs)',
+                }}>
+                {type === 'remise' ? 'Remise' : 'Augm.'}
+              </button>
+            ))}
+          </div>
+          <input className="form-input" type="number" step="1" min="0" max="100"
+            placeholder="Ex : 10 (facultatif)"
+            value={f.ajustement_valeur}
+            onChange={e => setF(prev => ({ ...prev, ajustement_valeur: e.target.value }))} />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+        <button className="btn btn-primary" style={{ flex: 1 }} onClick={onValider} disabled={chargement}>
+          <Check size={16} /> {labelBouton}
+        </button>
+        {onAnnuler && (
+          <button className="btn btn-secondary" onClick={onAnnuler}>
+            <X size={16} />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function GestionRevendeurs({ revendeurs: init }: Props) {
   const [lieux, setLieux] = useState(init)
   const [form, setForm] = useState<FormLieu>(formVide)
@@ -113,82 +190,6 @@ export default function GestionRevendeurs({ revendeurs: init }: Props) {
     setLieux(l => l.filter(r => r.id !== id))
   }
 
-  function FormulaireLieu({ f, setF, onValider, onAnnuler, labelBouton }: {
-    f: FormLieu
-    setF: (fn: (prev: FormLieu) => FormLieu) => void
-    onValider: () => void
-    onAnnuler?: () => void
-    labelBouton: string
-  }) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-        <div className="form-group">
-          <label className="form-label">Nom du lieu</label>
-          <input className="form-input" placeholder="Ex : Marché de Noël, Kermesse École…"
-            value={f.nom} onChange={e => setF(prev => ({ ...prev, nom: e.target.value }))} />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label">Type de frais</label>
-          <select className="form-input" value={f.commission_type}
-            onChange={e => setF(prev => ({ ...prev, commission_type: e.target.value, commission_valeur: '' }))}>
-            {TYPES_FRAIS.map(t => <option key={t.val} value={t.val}>{t.label}</option>)}
-          </select>
-          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>
-            {TYPES_FRAIS.find(t => t.val === f.commission_type)?.ex}
-          </span>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
-          <div className="form-group">
-            <label className="form-label">
-              {f.commission_type === 'pourcentage' ? 'Taux (%)' : 'Montant (€)'}
-            </label>
-            <input className="form-input" type="number" step="0.01" min="0"
-              placeholder={f.commission_type === 'pourcentage' ? 'Ex : 15' : 'Ex : 50'}
-              value={f.commission_valeur}
-              onChange={e => setF(prev => ({ ...prev, commission_valeur: e.target.value }))} />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Ajustement auto sur tes prix</label>
-            <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
-              {(['remise', 'augmentation'] as const).map(type => (
-                <button key={type} type="button"
-                  onClick={() => setF(prev => ({ ...prev, ajustement_type: type }))}
-                  style={{
-                    flex: 1, padding: '5px 8px', borderRadius: 'var(--radius)',
-                    border: `2px solid ${f.ajustement_type === type ? (type === 'remise' ? 'var(--color-warning)' : 'var(--color-success)') : 'var(--color-border)'}`,
-                    background: f.ajustement_type === type ? (type === 'remise' ? 'var(--color-warning-light)' : 'var(--color-success-light)') : 'var(--color-surface)',
-                    color: f.ajustement_type === type ? (type === 'remise' ? 'var(--color-warning)' : 'var(--color-success)') : 'var(--color-text-secondary)',
-                    fontWeight: f.ajustement_type === type ? 600 : 400,
-                    cursor: 'pointer', fontSize: 'var(--text-xs)',
-                  }}>
-                  {type === 'remise' ? 'Remise' : 'Augm.'}
-                </button>
-              ))}
-            </div>
-            <input className="form-input" type="number" step="1" min="0" max="100"
-              placeholder="Ex : 10 (facultatif)"
-              value={f.ajustement_valeur}
-              onChange={e => setF(prev => ({ ...prev, ajustement_valeur: e.target.value }))} />
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-          <button className="btn btn-primary" style={{ flex: 1 }} onClick={onValider} disabled={chargement}>
-            <Check size={16} /> {labelBouton}
-          </button>
-          {onAnnuler && (
-            <button className="btn btn-secondary" onClick={onAnnuler}>
-              <X size={16} />
-            </button>
-          )}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div>
       <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -206,6 +207,7 @@ export default function GestionRevendeurs({ revendeurs: init }: Props) {
                 onValider={() => enregistrerEdition(lieu.id)}
                 onAnnuler={() => setEnEdition(null)}
                 labelBouton="Enregistrer"
+                chargement={chargement}
               />
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
@@ -254,6 +256,7 @@ export default function GestionRevendeurs({ revendeurs: init }: Props) {
           setF={setForm}
           onValider={ajouter}
           labelBouton="Ajouter ce lieu"
+          chargement={chargement}
         />
         {erreur && <p className="form-error" style={{ marginTop: 8 }}>{erreur}</p>}
       </div>
