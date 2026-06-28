@@ -101,6 +101,7 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
         prix_vente_reel: prixUnitaire,
         canal: form.canal,
         revendeur_id: form.canal === 'revendeur' ? form.revendeur_id || null : null,
+        revendeur_nom: form.canal === 'revendeur' && rev ? rev.nom : null,
         marge_nette: margeAEnregistrer,
         photo_url: photoUrl || null,
         mode_paiement: form.mode_paiement,
@@ -292,18 +293,23 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
             <select className="form-input" value={form.revendeur_id}
               onChange={e => {
                 const lieu = revendeurs.find(r => r.id === e.target.value)
-                const remise = lieu?.remise_defaut || 0
-                setForm(f => ({
-                  ...f,
-                  revendeur_id: e.target.value,
-                  ...(remise > 0 ? {
-                    remise: remise.toString(),
-                    ajustement_type: 'reduction' as const,
-                    ajustement_unite: 'pct' as const,
-                    ajustement_valeur: remise.toString(),
-                    prix_vente_reel: (prixSouhaite * (1 - remise / 100)).toFixed(2),
-                  } : {}),
-                }))
+                const ajustement = lieu?.remise_defaut || 0
+                const updates: any = { revendeur_id: e.target.value }
+                if (ajustement > 0) {
+                  updates.remise = ajustement.toString()
+                  updates.ajustement_type = 'reduction'
+                  updates.ajustement_unite = 'pct'
+                  updates.ajustement_valeur = ajustement.toString()
+                  updates.prix_vente_reel = (prixSouhaite * (1 - ajustement / 100)).toFixed(2)
+                } else if (ajustement < 0) {
+                  const val = Math.abs(ajustement)
+                  updates.remise = ''
+                  updates.ajustement_type = 'augmentation'
+                  updates.ajustement_unite = 'pct'
+                  updates.ajustement_valeur = val.toString()
+                  updates.prix_vente_reel = (prixSouhaite * (1 + val / 100)).toFixed(2)
+                }
+                setForm(f => ({ ...f, ...updates }))
               }}>
               <option value="">Choisir un lieu...</option>
               {revendeurs.map(r => (

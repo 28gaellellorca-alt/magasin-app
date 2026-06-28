@@ -120,7 +120,7 @@ export default function ListeVentes({ ventes }: { ventes: any[] }) {
                     {formatDate(v.date_vente)}
                   </div>
                   <div className="card-meta">
-                    {v.canal === 'direct' ? 'Vente directe' : `Via ${v.revendeur?.nom || 'lieu de vente'}`}
+                    {v.canal === 'direct' ? 'Vente directe' : `Via ${v.revendeur?.nom || v.revendeur_nom || 'lieu supprimé'}`}
                     {' — '}
                     {v.quantite_vendue} article{v.quantite_vendue > 1 ? 's' : ''}
                     {v.acheteur && <span> — <strong>{v.acheteur}</strong></span>}
