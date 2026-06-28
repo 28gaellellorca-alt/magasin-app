@@ -11,7 +11,7 @@ import BoutonDepot from '@/components/BoutonDepot'
 async function getProduit(id: string) {
   const { data } = await supabase
     .from('produits')
-    .select('*, categorie:categories(nom), sous_categorie:sous_categories(nom), lieu_depot:revendeurs(id, nom)')
+    .select('*, categorie:categories(nom), sous_categorie:sous_categories(nom)')
     .eq('id', id)
     .single()
   return data
@@ -44,6 +44,10 @@ export default async function FicheProduit({ params }: { params: { id: string } 
   ])
 
   if (!produit) notFound()
+
+  const lieuDepot = produit.lieu_depot_id
+    ? (revendeurs.find((r: any) => r.id === produit.lieu_depot_id) || null)
+    : null
 
   const marge = produit.prix_vente_souhaite - produit.prix_revient
   const margePct = produit.prix_revient > 0 ? Math.round((marge / produit.prix_revient) * 100) : 0
@@ -127,7 +131,7 @@ export default async function FicheProduit({ params }: { params: { id: string } 
           <BoutonDepot
             produitId={produit.id}
             quantiteDisponible={produit.quantite}
-            lieuDepot={produit.lieu_depot || null}
+            lieuDepot={lieuDepot}
             quantiteEnDepot={produit.quantite_en_depot || 0}
             revendeurs={revendeurs}
           />
@@ -144,7 +148,7 @@ export default async function FicheProduit({ params }: { params: { id: string } 
             prixRevient={produit.prix_revient}
             quantiteDisponible={produit.quantite}
             revendeurs={revendeurs}
-            lieuDepotId={produit.lieu_depot?.id || null}
+            lieuDepotId={produit.lieu_depot_id || null}
             quantiteEnDepot={produit.quantite_en_depot || 0}
           />
         </div>
