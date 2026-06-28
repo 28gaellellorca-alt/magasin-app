@@ -18,6 +18,7 @@ Application web de gestion de stock pour une boutique artisanale fait main ("Les
 |---|---|---|---|
 | `v1-stable` | `d569e81` | 28 juin 2026 | Première version fonctionnelle complète |
 | `v2-stable` | `5a9f9bf` | 28 juin 2026 | Lieux de vente (édition, augmentation auto), catalogue par lieu, aperçu partageable, fournisseur, alertes stock bas, guide intégré |
+| *(en cours)* | `2dceec6` | 28 juin 2026 | Marchés/événements, dépôt depuis le catalogue, annulation dépôt depuis catalogue, page Ventes enrichie (panier moyen, filtre lieu, répartitions), guide refondu + visible mobile, fix aperçu partageable |
 
 En cas de régression grave, revenir à une version stable :
 
@@ -132,36 +133,39 @@ Les pages serveur chargent les données puis les passent en props aux composants
 
 | Route | Fichier | Rôle |
 |---|---|---|
-| `/` | `app/page.tsx` | Tableau de bord (CA par période, URSSAF, TVA) |
-| `/produits` | `app/produits/page.tsx` | Liste des articles par ordre alphabétique, filtres, vue par lieu |
+| `/` | `app/page.tsx` | Tableau de bord (CA par période, URSSAF, TVA, alertes stock bas) |
+| `/produits` | `app/produits/page.tsx` | Liste des articles par ordre alphabétique, filtres, vue par lieu, bouton "+ Ajouter" |
 | `/produits/[id]` | `app/produits/[id]/page.tsx` | Fiche produit + historique ventes |
 | `/produits/[id]/modifier` | `app/produits/[id]/modifier/page.tsx` | Formulaire de modification |
-| `/ajouter` | `app/ajouter/page.tsx` | Formulaire d'ajout avec upload photo |
-| `/ventes` | `app/ventes/page.tsx` | Historique de toutes les ventes avec filtre période |
+| `/ajouter` | `app/ajouter/page.tsx` | Formulaire d'ajout avec upload photo (accessible depuis /produits) |
+| `/ventes` | `app/ventes/page.tsx` | Historique ventes avec filtre période + lieu, CA/marge/panier moyen, répartitions paiement/canal |
+| `/evenements` | `app/evenements/page.tsx` | Page Marchés : vue d'ensemble des lieux de vente avec bilan CA/bénéfice |
+| `/evenements/[lieu_id]` | `app/evenements/[lieu_id]/page.tsx` | Fiche lieu : stats globales, liste événements avec bilan, réglages lieu |
 | `/stats` | `app/stats/page.tsx` | Stats par catégorie, sous-catégorie, produit, lieu de vente + dépôts en cours |
 | `/urssaf` | `app/urssaf/page.tsx` | Récap mensuel : CA, marge, URSSAF, espèces/carte, suivi paiements |
 | `/parametres` | `app/parametres/page.tsx` | Catégories et lieux de vente |
-| `/catalogue/[lieu_id]` | `app/catalogue/[lieu_id]/page.tsx` | Gestion du catalogue d'un lieu (produits + prix spécifiques) |
+| `/catalogue/[lieu_id]` | `app/catalogue/[lieu_id]/page.tsx` | Gestion du catalogue d'un lieu (produits + prix spécifiques, dépôt direct, annulation dépôt) |
 | `/catalogue/[lieu_id]/apercu` | `app/catalogue/[lieu_id]/apercu/page.tsx` | Aperçu partageable/imprimable du catalogue (sans prix d'achat) |
-| `/guide` | `app/guide/page.tsx` | Guide utilisateur complet intégré dans l'app |
+| `/guide` | `app/guide/page.tsx` | Guide utilisateur complet intégré dans l'app (visible desktop + mobile) |
 
 ### Composants clés
 
-- `Navigation.tsx` — sidebar desktop + header mobile + nav bottom mobile. Contient les SVG du logo inline.
+- `Navigation.tsx` — sidebar desktop + header mobile + nav bottom mobile. Contient les SVG du logo inline. 8 liens (Guide inclus dans mobile depuis juin 2026, `mobileOnly: false` pour tous).
 - `CartesProduits.tsx` — grille de produits avec recherche, filtres (catégorie, état) et sélecteur "Voir les prix pour un lieu"
 - `BoutonVente.tsx` — formulaire de vente complet (prix, quantité, réduction OU augmentation en % ou €, mode paiement, canal, lieu de vente, acheteur, notes). Calcule la marge et décrémente le stock. Auto-applique la remise_defaut du lieu sélectionné. Gère aussi le décrément du dépôt si la vente vient d'un lieu de dépôt.
 - `BoutonDepot.tsx` — déposer une partie du stock dans un lieu de vente (quantité partielle). Bouton "Retour de dépôt" pour récupérer le stock.
 - `BoutonAnnulerVente.tsx` — annulation d'une vente avec remise en stock automatique. Gère le cas produit supprimé (produit_id null).
 - `BoutonSupprimerProduit.tsx` — suppression produit avec confirmation, navigue via `window.location.href` (pas `router.push`)
 - `BoutonExportCSV.tsx` — export CSV des ventes filtré par période (format français : `;` et `,`)
-- `ListeVentes.tsx` — liste des ventes avec filtre période (semaine/mois/trimestre/année/tout) et bouton annuler par ligne
+- `BoutonImprimer.tsx` — bouton "Imprimer ce catalogue" (`'use client'`). Nécessaire car `onClick` est interdit dans les pages serveur.
+- `ListeVentes.tsx` — liste des ventes avec filtre période (semaine/mois/trimestre/année/tout), filtre par lieu de vente, stat-cards CA/marge/panier moyen, répartitions espèces-carte et direct-lieu, bouton annuler par ligne
 - `StatsVentes.tsx` — statistiques avec filtre période : par lieu de vente (bénéfice net), catégorie, sous-catégorie, top produits
 - `SectionDepots.tsx` — affiche les produits actuellement en dépôt chez les lieux de vente (sur la page Stats)
 - `SuiviURSSAF.tsx` — récap mensuel avec marquage des paiements URSSAF
 - `PrixParLieu.tsx` — saisie des prix spécifiques par lieu de vente (sur la fiche produit)
 - `FormulaireAjout.tsx` / `FormulaireModifier.tsx` — upload photo vers Supabase Storage avec compression automatique (max 1200px, JPEG 82%) via `lib/compresserImage.ts`
 - `GestionCategories.tsx` / `GestionRevendeurs.tsx` — CRUD dans les réglages (GestionRevendeurs gère les "lieux de vente" malgré le nom du fichier). GestionRevendeurs inclut un mode édition inline (crayon) et un lien "Catalogue" vers `/catalogue/[lieu.id]`
-- `GestionCatalogueLieu.tsx` — gestion du catalogue d'un lieu : ajouter/retirer des produits avec prix spécifiques, lien vers l'aperçu partageable
+- `GestionCatalogueLieu.tsx` — gestion du catalogue d'un lieu : ajouter/retirer des produits avec prix spécifiques, **déposer directement depuis le catalogue** (bouton "Déposer" + mini-formulaire `MiniFormDepot` défini HORS du parent), **annuler un dépôt depuis le catalogue** (bouton X), lien vers l'aperçu partageable. `MiniFormDepot` doit rester défini EN DEHORS du composant parent sinon il se re-monte à chaque render.
 
 ### Base de données Supabase
 
@@ -253,17 +257,24 @@ Navigation responsive : sidebar fixe à gauche sur desktop (≥ 768px), header +
 - **NE PAS utiliser la jointure `lieu_depot:revendeurs(id, nom)` dans getProduit** : cette jointure cause des 404 sur toutes les fiches produit depuis la création de la table prix_lieu (rechargement du cache schema Supabase). A la place, récupérer lieu_depot manuellement depuis la liste revendeurs déjà chargée : `revendeurs.find(r => r.id === produit.lieu_depot_id)`
 - **export const dynamic = 'force-dynamic'** : obligatoire sur toutes les pages serveur pour éviter la mise en cache Vercel
 - **TypeScript + jointures Supabase** : les jointures sont inférées comme tableaux par TypeScript. Si tu as `p.categorie.nom` qui échoue à la compilation, caster avec `p.categorie as any`
+- **onClick interdit dans les pages serveur** : un `onClick` dans un composant `async` (page serveur) provoque une erreur runtime "Application error" avec un digest opaque. Toujours extraire les boutons interactifs dans un composant client séparé (`'use client'`). Exemple : `BoutonImprimer.tsx` pour le bouton d'impression de l'aperçu catalogue.
+- **Composants définis à l'intérieur d'un parent** : si un sous-composant est déclaré DANS le corps d'un autre composant, il est recréé à chaque render — les inputs perdent leur focus. Toujours déclarer les sous-composants EN DEHORS du parent (cf. `MiniFormDepot` dans `GestionCatalogueLieu.tsx`).
 
 ---
 
 ## Roadmap — fonctionnalités à venir
 
-### 1. Événements (priorité haute)
-Chaque participation à un marché = un événement avec son propre bilan.
-Table prévue : `evenements` (date, nom, revendeur_id, cout_emplacement, transport, autres_frais, notes).
-Objectif : afficher le bénéfice net réel par événement dans les Stats (CA − commissions − frais d'entrée − coûts événement).
-
-### 2. Dépenses générales
+### 1. Dépenses générales
 Frais non liés à une vente : emballages, matières premières, fournitures.
 Table prévue : `depenses` (date, montant, categorie, description).
 Impact attendu : marge globale réelle sur le tableau de bord et le récap URSSAF.
+
+---
+
+## Fonctionnalités livrées (historique)
+
+- **Marchés & événements** (`/evenements`, `/evenements/[lieu_id]`) — bilan par lieu, enregistrement d'événements avec frais, rattachement automatique des ventes par date+lieu
+- **Dépôt depuis le catalogue** — `GestionCatalogueLieu.tsx` : bouton "Déposer" inline sur chaque article hors catalogue
+- **Annulation dépôt depuis catalogue** — bouton X dans la section "En dépôt ici"
+- **Page Ventes enrichie** — panier moyen, filtre par lieu, répartitions espèces/carte et direct/lieu
+- **Guide refondu** — toutes les fonctionnalités documentées, visible sur mobile
