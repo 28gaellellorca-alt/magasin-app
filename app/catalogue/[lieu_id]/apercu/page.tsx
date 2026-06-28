@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import { Package } from 'lucide-react'
+import BoutonImprimer from '@/components/BoutonImprimer'
 
 async function getLieu(id: string) {
   const { data } = await supabase.from('revendeurs').select('nom').eq('id', id).single()
@@ -71,15 +72,7 @@ export default async function ApercuCataloguePage({ params }: { params: { lieu_i
 
         {/* Bouton imprimer */}
         <div className="no-print" style={{ textAlign: 'center', marginBottom: 32 }}>
-          <button
-            onClick={() => window.print()}
-            style={{
-              background: '#C4953A', color: 'white', border: 'none', borderRadius: 10,
-              padding: '10px 28px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-            }}
-          >
-            Imprimer ce catalogue
-          </button>
+          <BoutonImprimer />
         </div>
 
         {produits.length === 0 ? (
