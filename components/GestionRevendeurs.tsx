@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { Plus, Trash2, MapPin, Pencil, Check, X } from 'lucide-react'
+import { Plus, Trash2, MapPin, Pencil, Check, X, BookOpen } from 'lucide-react'
 
 interface Props { revendeurs: any[] }
 
@@ -215,6 +216,14 @@ export default function GestionRevendeurs({ revendeurs: init }: Props) {
                     {labelAjustement(lieu) && ` · ${labelAjustement(lieu)}`}
                   </div>
                 </div>
+                <Link
+                  href={`/catalogue/${lieu.id}`}
+                  className="btn btn-secondary"
+                  style={{ fontSize: 'var(--text-xs)', minHeight: 32, padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                  title="Gérer le catalogue"
+                >
+                  <BookOpen size={14} /> Catalogue
+                </Link>
                 <button
                   onClick={() => { setEnEdition(lieu.id); setFormEdit(formDepuisLieu(lieu)) }}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}
