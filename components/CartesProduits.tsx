@@ -2,20 +2,72 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Package, ChevronDown, ChevronUp, Search, X } from 'lucide-react'
+import { Package, ChevronDown, ChevronUp, Search, X, Pencil } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 interface Props {
   produits: any[]
   categories: any[]
   revendeurs: any[]
   prixLieu: { produit_id: string; revendeur_id: string; prix_vente: number }[]
+  sousCategories: { id: string; nom: string }[]
 }
 
 function euro(val: number) {
   return val.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
 }
 
-function CarteInfo({ p, prixLieu }: { p: any; prixLieu?: number }) {
+function BadgeSousCat({ produitId, valeurId, valeurNom, options }: {
+  produitId: string
+  valeurId: string | null
+  valeurNom: string | null
+  options: { id: string; nom: string }[]
+}) {
+  const [id, setId] = useState(valeurId)
+  const [nom, setNom] = useState(valeurNom)
+  const [edition, setEdition] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  async function changer(newId: string) {
+    setEdition(false)
+    setSaving(true)
+    const { error } = await supabase.from('produits').update({
+      sous_categorie_id: newId || null,
+      updated_at: new Date().toISOString(),
+    }).eq('id', produitId)
+    if (!error) {
+      setId(newId || null)
+      setNom(options.find(o => o.id === newId)?.nom || null)
+    }
+    setSaving(false)
+  }
+
+  if (edition) {
+    return (
+      <select autoFocus
+        defaultValue={id || ''}
+        onChange={e => changer(e.target.value)}
+        onBlur={() => setEdition(false)}
+        style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-full)', padding: '2px 10px', fontSize: 'var(--text-xs)', fontWeight: 500, background: 'var(--color-surface)', cursor: 'pointer' }}>
+        <option value="">Aucune</option>
+        {options.map(o => <option key={o.id} value={o.id}>{o.nom}</option>)}
+      </select>
+    )
+  }
+
+  return (
+    <span
+      className="badge badge-neutral"
+      style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3, fontStyle: nom ? 'italic' : 'normal' }}
+      onClick={e => { e.preventDefault(); setEdition(true) }}
+      title="Cliquer pour modifier la sous-catégorie">
+      {saving ? '…' : (nom || <em style={{ opacity: 0.5, fontStyle: 'normal' }}>+ sous-cat</em>)}
+      <Pencil size={9} style={{ opacity: 0.3, flexShrink: 0 }} />
+    </span>
+  )
+}
+
+function CarteInfo({ p, prixLieu, sousCategories }: { p: any; prixLieu?: number; sousCategories: { id: string; nom: string }[] }) {
   const [ouvert, setOuvert] = useState(false)
   const prixAffiché = prixLieu ?? p.prix_vente_souhaite
   const marge = prixAffiché - p.prix_revient
@@ -42,9 +94,12 @@ function CarteInfo({ p, prixLieu }: { p: any; prixLieu?: number }) {
           {p.categorie && (
             <span className="badge badge-primary">{p.categorie.nom}</span>
           )}
-          {p.sous_categorie && (
-            <span className="badge badge-neutral" style={{ fontStyle: 'italic' }}>{p.sous_categorie.nom}</span>
-          )}
+          <BadgeSousCat
+            produitId={p.id}
+            valeurId={p.sous_categorie_id || null}
+            valeurNom={p.sous_categorie?.nom || null}
+            options={sousCategories}
+          />
           <span className={`badge ${p.etat === 'disponible' ? 'badge-success' : p.etat === 'vendu' ? 'badge-neutral' : 'badge-warning'}`}>
             {p.etat === 'disponible' ? 'Disponible' : p.etat === 'vendu' ? 'Vendu' : 'Réservé'}
           </span>
@@ -135,7 +190,7 @@ function CarteInfo({ p, prixLieu }: { p: any; prixLieu?: number }) {
   )
 }
 
-export default function CartesProduits({ produits, categories, revendeurs, prixLieu }: Props) {
+export default function CartesProduits({ produits, categories, revendeurs, prixLieu, sousCategories }: Props) {
   const [catFiltre, setCatFiltre] = useState('')
   const [sousCatFiltre, setSousCatFiltre] = useState('')
   const [etatFiltre, setEtatFiltre] = useState('')
@@ -272,7 +327,7 @@ export default function CartesProduits({ produits, categories, revendeurs, prixL
       ) : (
         <div className="grid-products">
           {filtres.map((p: any) => (
-            <CarteInfo key={p.id} p={p} prixLieu={getPrixPourLieu(p.id)} />
+            <CarteInfo key={p.id} p={p} prixLieu={getPrixPourLieu(p.id)} sousCategories={sousCategories} />
           ))}
         </div>
       )}

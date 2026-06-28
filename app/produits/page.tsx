@@ -27,9 +27,14 @@ async function getPrixLieu() {
   return data || []
 }
 
+async function getSousCategories() {
+  const { data } = await supabase.from('sous_categories').select('*').order('nom')
+  return data || []
+}
+
 export default async function ProduitsPage() {
-  const [produits, categories, revendeurs, prixLieu] = await Promise.all([
-    getProduits(), getCategories(), getRevendeurs(), getPrixLieu(),
+  const [produits, categories, revendeurs, prixLieu, sousCategories] = await Promise.all([
+    getProduits(), getCategories(), getRevendeurs(), getPrixLieu(), getSousCategories(),
   ])
 
   return (
@@ -47,7 +52,7 @@ export default async function ProduitsPage() {
         </Link>
       </div>
 
-      <CartesProduits produits={produits} categories={categories} revendeurs={revendeurs} prixLieu={prixLieu} />
+      <CartesProduits produits={produits} categories={categories} revendeurs={revendeurs} prixLieu={prixLieu} sousCategories={sousCategories} />
     </div>
   )
 }
