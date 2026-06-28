@@ -120,9 +120,18 @@ export default async function FicheProduit({ params }: { params: { id: string } 
         </div>
       </div>
 
-      {produit.notes && (
-        <div style={{ background: 'var(--color-accent-light)', borderRadius: 'var(--radius)', padding: 'var(--space-4)', marginBottom: 'var(--space-5)' }}>
-          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}><strong>Notes :</strong> {produit.notes}</p>
+      {(produit.fournisseur || produit.notes) && (
+        <div style={{ background: 'var(--color-accent-light)', borderRadius: 'var(--radius)', padding: 'var(--space-4)', marginBottom: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+          {produit.fournisseur && (
+            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+              <strong>Acheté à :</strong> {produit.fournisseur}
+            </p>
+          )}
+          {produit.notes && (
+            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+              <strong>Notes :</strong> {produit.notes}
+            </p>
+          )}
         </div>
       )}
 

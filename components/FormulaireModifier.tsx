@@ -30,6 +30,7 @@ export default function FormulaireModifier({ produit, categories, sousCategories
     quantite: (produit.quantite ?? 1).toString(),
     etat: produit.etat,
     notes: produit.notes || '',
+    fournisseur: produit.fournisseur || '',
   })
 
   const prixRevient = (parseFloat(form.prix_achat) || 0) + (parseFloat(form.frais_annexes) || 0)
@@ -83,6 +84,7 @@ export default function FormulaireModifier({ produit, categories, sousCategories
         quantite: parseInt(form.quantite) || 1,
         etat: form.etat,
         notes: form.notes.trim() || null,
+        fournisseur: form.fournisseur.trim() || null,
         photo_url,
         updated_at: new Date().toISOString(),
       }).eq('id', produit.id)
@@ -189,6 +191,13 @@ export default function FormulaireModifier({ produit, categories, sousCategories
           <option value="reserve">Réservé</option>
           <option value="vendu">Vendu</option>
         </select>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Acheté à / Source</label>
+        <input className="form-input" type="text"
+          placeholder="Ex : Vinted — Marie, Brocante Bordeaux…"
+          value={form.fournisseur} onChange={e => majChamp('fournisseur', e.target.value)} />
       </div>
 
       <div className="form-group">

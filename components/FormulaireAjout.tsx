@@ -43,7 +43,7 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
     nom: '', categorie_id: '', sous_categorie_id: '',
     prix_achat: '', frais_annexes: '0',
     prix_vente_souhaite: '', quantite: '1',
-    etat: 'disponible', notes: '',
+    etat: 'disponible', notes: '', fournisseur: '',
   })
 
   const prixRevient = (parseFloat(form.prix_achat) || 0) + (parseFloat(form.frais_annexes) || 0)
@@ -104,6 +104,7 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
         quantite: parseInt(form.quantite) || 1,
         etat: form.etat,
         notes: form.notes.trim() || null,
+        fournisseur: form.fournisseur.trim() || null,
         photo_url,
       }).select('id')
       if (error) throw new Error(error.message)
@@ -135,7 +136,7 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
             setErreur('')
             setPhotoPreview(null)
             setFichierPhoto(null)
-            setForm({ nom: '', categorie_id: '', sous_categorie_id: '', prix_achat: '', frais_annexes: '0', prix_vente_souhaite: '', quantite: '1', etat: 'disponible', notes: '' })
+            setForm({ nom: '', categorie_id: '', sous_categorie_id: '', prix_achat: '', frais_annexes: '0', prix_vente_souhaite: '', quantite: '1', etat: 'disponible', notes: '', fournisseur: '' })
           }}>
             Ajouter un autre article
           </button>
@@ -259,6 +260,13 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
           <option value="reserve">Réservé</option>
           <option value="vendu">Vendu</option>
         </select>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label" htmlFor="fournisseur">Acheté à / Source</label>
+        <input id="fournisseur" className="form-input" type="text"
+          placeholder="Ex : Vinted — Marie, Brocante Bordeaux, Marché Saint-Michel…"
+          value={form.fournisseur} onChange={e => majChamp('fournisseur', e.target.value)} />
       </div>
 
       <div className="form-group">
