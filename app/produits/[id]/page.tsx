@@ -139,6 +139,7 @@ export default async function FicheProduit({ params }: { params: { id: string } 
         <div style={{ marginBottom: 'var(--space-4)' }}>
           <BoutonDepot
             produitId={produit.id}
+            prixVenteSouhaite={produit.prix_vente_souhaite}
             quantiteDisponible={produit.quantite}
             lieuDepot={lieuDepot}
             quantiteEnDepot={produit.quantite_en_depot || 0}

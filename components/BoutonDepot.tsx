@@ -5,13 +5,22 @@ import { MapPin } from 'lucide-react'
 
 interface Props {
   produitId: string
+  prixVenteSouhaite: number
   quantiteDisponible: number
   lieuDepot: { id: string; nom: string } | null
   quantiteEnDepot: number
   revendeurs: any[]
 }
 
-export default function BoutonDepot({ produitId, quantiteDisponible, lieuDepot, quantiteEnDepot, revendeurs }: Props) {
+function prixAjuste(base: number, lieu: any): number {
+  const adj = lieu?.remise_defaut || 0
+  if (!adj) return base
+  const val = Math.abs(adj)
+  if (lieu.remise_defaut_type === 'euro') return adj > 0 ? Math.max(0, base - val) : base + val
+  return adj > 0 ? base * (1 - val / 100) : base * (1 + val / 100)
+}
+
+export default function BoutonDepot({ produitId, prixVenteSouhaite, quantiteDisponible, lieuDepot, quantiteEnDepot, revendeurs }: Props) {
   const [ouvert, setOuvert] = useState(false)
   const [lieuChoisi, setLieuChoisi] = useState('')
   const [qte, setQte] = useState('1')
@@ -29,9 +38,15 @@ export default function BoutonDepot({ produitId, quantiteDisponible, lieuDepot, 
     }
     setChargement(true)
     setErreur('')
-    const { error } = await supabase.from('produits')
-      .update({ lieu_depot_id: lieuChoisi, quantite_en_depot: q })
-      .eq('id', produitId)
+    const lieu = revendeurs.find((r: any) => r.id === lieuChoisi)
+    const prix = parseFloat(prixAjuste(prixVenteSouhaite, lieu).toFixed(2))
+    const [{ error }] = await Promise.all([
+      supabase.from('produits').update({ lieu_depot_id: lieuChoisi, quantite_en_depot: q }).eq('id', produitId),
+      supabase.from('prix_lieu').upsert(
+        { produit_id: produitId, revendeur_id: lieuChoisi, prix_vente: prix },
+        { onConflict: 'produit_id,revendeur_id' }
+      ),
+    ])
     if (error) { setErreur('Erreur lors du dépôt'); setChargement(false); return }
     window.location.reload()
   }
