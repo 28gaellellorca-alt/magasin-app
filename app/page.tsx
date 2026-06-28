@@ -41,6 +41,7 @@ async function getDashboardData() {
     const jours = (Date.now() - new Date(p.created_at).getTime()) / 86400000
     return jours > 60
   }).length
+  const artStockBas = produitsDispos.filter(p => p.stock_min > 0 && p.quantite <= p.stock_min).length
 
   const caMois = ca(ventesMois)
   const caTrimestre = ca(ventesTrimestre)
@@ -53,7 +54,7 @@ async function getDashboardData() {
   const nomTrimestre = `T${trimestreCourant + 1} ${annee}`
 
   return {
-    valeurStock, caPotentiel, nbArticlesDispos, artOld,
+    valeurStock, caPotentiel, nbArticlesDispos, artOld, artStockBas,
     nbProduits: (produits || []).length,
     caMois, caTrimestre, caAnnee, margeMois,
     cotisationsEstimees, pctTVA,
@@ -163,6 +164,15 @@ export default async function DashboardPage() {
             <div className="stat-value">{d.artOld}</div>
             <div className="stat-sub">Articles &gt; 60 jours</div>
           </div>
+        )}
+        {d.artStockBas > 0 && (
+          <Link href="/produits" style={{ textDecoration: 'none' }}>
+            <div className="stat-card" style={{ borderTopColor: 'var(--color-danger)', background: 'var(--color-danger-light)', cursor: 'pointer' }}>
+              <div className="stat-label" style={{ color: 'var(--color-danger)' }}>Stock bas</div>
+              <div className="stat-value" style={{ color: 'var(--color-danger)' }}>{d.artStockBas}</div>
+              <div className="stat-sub">Article{d.artStockBas > 1 ? 's' : ''} à réapprovisionner</div>
+            </div>
+          </Link>
         )}
       </div>
 

@@ -43,7 +43,7 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
     nom: '', categorie_id: '', sous_categorie_id: '',
     prix_achat: '', frais_annexes: '0',
     prix_vente_souhaite: '', quantite: '1',
-    etat: 'disponible', notes: '', fournisseur: '',
+    etat: 'disponible', notes: '', fournisseur: '', stock_min: '0',
   })
 
   const prixRevient = (parseFloat(form.prix_achat) || 0) + (parseFloat(form.frais_annexes) || 0)
@@ -102,6 +102,7 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
         prix_revient: prixRevient,
         prix_vente_souhaite: prixVente,
         quantite: parseInt(form.quantite) || 1,
+        stock_min: parseInt(form.stock_min) || 0,
         etat: form.etat,
         notes: form.notes.trim() || null,
         fournisseur: form.fournisseur.trim() || null,
@@ -136,7 +137,7 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
             setErreur('')
             setPhotoPreview(null)
             setFichierPhoto(null)
-            setForm({ nom: '', categorie_id: '', sous_categorie_id: '', prix_achat: '', frais_annexes: '0', prix_vente_souhaite: '', quantite: '1', etat: 'disponible', notes: '', fournisseur: '' })
+            setForm({ nom: '', categorie_id: '', sous_categorie_id: '', prix_achat: '', frais_annexes: '0', prix_vente_souhaite: '', quantite: '1', etat: 'disponible', notes: '', fournisseur: '', stock_min: '0' })
           }}>
             Ajouter un autre article
           </button>
@@ -250,6 +251,12 @@ export default function FormulaireAjout({ categories, sousCategories }: Props) {
           <label className="form-label" htmlFor="quantite">Quantité</label>
           <input id="quantite" className="form-input" type="number" min="1" step="1"
             value={form.quantite} onChange={e => majChamp('quantite', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label" htmlFor="stock_min">Alerte si stock sous (qté)</label>
+          <input id="stock_min" className="form-input" type="number" min="0" step="1"
+            placeholder="0 = pas d'alerte"
+            value={form.stock_min} onChange={e => majChamp('stock_min', e.target.value)} />
         </div>
       </div>
 

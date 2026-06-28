@@ -61,9 +61,14 @@ function CarteInfo({ p, prixLieu }: { p: any; prixLieu?: number }) {
         </div>
 
         {/* Ligne quantité visible directement */}
+        {p.stock_min > 0 && p.quantite <= p.stock_min && (
+          <div style={{ marginTop: 6, background: 'var(--color-danger-light)', color: 'var(--color-danger)', borderRadius: 'var(--radius)', padding: '3px 8px', fontSize: 'var(--text-xs)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            ⚠ Stock bas
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
           <span className="card-meta">
-            Qté en stock : <strong style={{ color: p.quantite > 0 ? 'var(--color-text-primary)' : 'var(--color-danger)' }}>{p.quantite}</strong>
+            Qté en stock : <strong style={{ color: p.quantite > 0 ? (p.stock_min > 0 && p.quantite <= p.stock_min ? 'var(--color-danger)' : 'var(--color-text-primary)') : 'var(--color-danger)' }}>{p.quantite}</strong>
           </span>
           <button
             onClick={() => setOuvert(v => !v)}

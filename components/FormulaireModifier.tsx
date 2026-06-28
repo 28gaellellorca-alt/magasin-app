@@ -31,6 +31,7 @@ export default function FormulaireModifier({ produit, categories, sousCategories
     etat: produit.etat,
     notes: produit.notes || '',
     fournisseur: produit.fournisseur || '',
+    stock_min: (produit.stock_min ?? 0).toString(),
   })
 
   const prixRevient = (parseFloat(form.prix_achat) || 0) + (parseFloat(form.frais_annexes) || 0)
@@ -82,6 +83,7 @@ export default function FormulaireModifier({ produit, categories, sousCategories
         prix_revient: prixRevient,
         prix_vente_souhaite: prixVente,
         quantite: parseInt(form.quantite) || 1,
+        stock_min: parseInt(form.stock_min) || 0,
         etat: form.etat,
         notes: form.notes.trim() || null,
         fournisseur: form.fournisseur.trim() || null,
@@ -181,6 +183,12 @@ export default function FormulaireModifier({ produit, categories, sousCategories
         <div className="form-group">
           <label className="form-label">Quantité</label>
           <input className="form-input" type="number" min="1" step="1" value={form.quantite} onChange={e => majChamp('quantite', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Alerte si stock sous (qté)</label>
+          <input className="form-input" type="number" min="0" step="1"
+            placeholder="0 = pas d'alerte"
+            value={form.stock_min} onChange={e => majChamp('stock_min', e.target.value)} />
         </div>
       </div>
 
