@@ -38,16 +38,22 @@ async function getSousCategories() {
   return data || []
 }
 
+async function getCategories() {
+  const { data } = await supabase.from('categories').select('*').order('nom')
+  return data || []
+}
+
 function euro(val: number) {
   return val.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
 }
 
 export default async function FicheProduit({ params }: { params: { id: string } }) {
-  const [produit, ventes, revendeurs, sousCategories] = await Promise.all([
+  const [produit, ventes, revendeurs, sousCategories, categories] = await Promise.all([
     getProduit(params.id),
     getVentes(params.id),
     getRevendeurs(),
     getSousCategories(),
+    getCategories(),
   ])
 
   if (!produit) notFound()
@@ -74,7 +80,7 @@ export default async function FicheProduit({ params }: { params: { id: string } 
         </div>
       )}
 
-      <FicheEditable produit={produit} sousCategories={sousCategories} />
+      <FicheEditable produit={produit} sousCategories={sousCategories} categories={categories} />
 
       {produit.etat === 'disponible' && (
         <div style={{ marginBottom: 'var(--space-4)' }}>

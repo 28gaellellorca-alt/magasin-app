@@ -199,6 +199,19 @@ Table `prix_lieu` : colonnes `produit_id uuid`, `revendeur_id uuid`, `prix_vente
 
 Bucket Storage : **`images de produits`** (nom exact avec espaces, en français — ne jamais changer)
 
+### Sous-catégories existantes (noms exacts — utilisés dans les scripts d'import)
+
+Les scripts d'import doivent utiliser ces noms tels quels (`sousCatByName[nom]`).
+
+| Catégorie | Sous-catégories |
+|---|---|
+| Accessoires | Barrette · Chouchou · Pochette · Porte-Monnaie · Protège-livre · Sacs · Trousse |
+| Beauté | Éponge écologique · Lot lingettes avec pochette · Lot lingettes seules · Sac à savon |
+| Bijoux | Boucle d'oreille · Bracelets · Colliers perles |
+| Déco maison | Bougeoir · Bougie · Corbeille tissu · Coquelicots · Décoration Noël · Ensemble décoratif · Fleur décoration métal · Fleurs copine gaëlle poudre de céramique · Lampe · Livre plié · Panier crochet · Rond de serviette · Sculpture Métal · Vase · Vide poche |
+| Enfant/Bébé | Couverture bébé · Hochet · Jeux · Peluche |
+| Textile | Bonnet · Echarpe · Ensemble Echarpe/Bonnet |
+
 ### Calculs métier
 
 ```

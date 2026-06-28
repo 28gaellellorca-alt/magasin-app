@@ -113,6 +113,46 @@ function ChampEtat({ etat, onSave }: { etat: string; onSave: (v: string) => Prom
   )
 }
 
+function ChampSelectCategorie({ valeurId, options, onSave }: {
+  valeurId: string | null
+  options: { id: string; nom: string }[]
+  onSave: (id: string) => Promise<void>
+}) {
+  const [edition, setEdition] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const label = options.find(o => o.id === valeurId)?.nom
+
+  async function changer(id: string) {
+    setEdition(false)
+    if (!id || id === valeurId) return
+    setSaving(true)
+    try { await onSave(id) } catch { } finally { setSaving(false) }
+  }
+
+  if (edition) {
+    return (
+      <select autoFocus
+        defaultValue={valeurId || ''}
+        onChange={e => changer(e.target.value)}
+        onBlur={() => setEdition(false)}
+        style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-full)', padding: '2px 10px', fontSize: 'var(--text-xs)', fontWeight: 500, background: 'var(--color-surface)', cursor: 'pointer' }}>
+        <option value="" disabled>Choisir...</option>
+        {options.map(o => <option key={o.id} value={o.id}>{o.nom}</option>)}
+      </select>
+    )
+  }
+
+  return (
+    <span className="badge badge-primary"
+      style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+      onClick={() => setEdition(true)}
+      title="Cliquer pour modifier la catégorie">
+      {saving ? '…' : (label || <em style={{ opacity: 0.5, fontStyle: 'normal' }}>Catégorie ?</em>)}
+      <Pencil size={10} style={{ opacity: 0.35 }} />
+    </span>
+  )
+}
+
 function ChampSelect({ valeurId, options, onSave }: {
   valeurId: string | null
   options: { id: string; nom: string }[]
@@ -167,10 +207,11 @@ function StatCardEditable({ label, children, muted }: { label: string; children:
 
 interface Props {
   produit: any
-  sousCategories: { id: string; nom: string }[]
+  sousCategories: { id: string; nom: string; categorie_id: string | null }[]
+  categories: { id: string; nom: string }[]
 }
 
-export default function FicheEditable({ produit: initial, sousCategories }: Props) {
+export default function FicheEditable({ produit: initial, sousCategories, categories }: Props) {
   const [p, setP] = useState(initial)
 
   async function sauver(champs: Record<string, any>) {
@@ -203,6 +244,8 @@ export default function FicheEditable({ produit: initial, sousCategories }: Prop
     await sauver({ quantite })
   }
 
+  const sousCatsFiltrees = sousCategories.filter(s => !s.categorie_id || s.categorie_id === p.categorie_id)
+
   const prixRevient = p.prix_achat + (p.frais_annexes || 0)
   const marge = p.prix_vente_souhaite - prixRevient
   const margePct = prixRevient > 0 ? Math.round((marge / prixRevient) * 100) : 0
@@ -216,10 +259,14 @@ export default function FicheEditable({ produit: initial, sousCategories }: Prop
             <ChampTexte valeur={p.nom} onSave={sauverNom} style={{ fontSize: 'inherit', fontWeight: 'inherit', fontFamily: 'inherit' }} />
           </h1>
           <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center' }}>
-            {p.categorie && <span className="badge badge-primary">{(p.categorie as any).nom}</span>}
+            <ChampSelectCategorie
+              valeurId={p.categorie_id || null}
+              options={categories}
+              onSave={async id => await sauver({ categorie_id: id, sous_categorie_id: null })}
+            />
             <ChampSelect
               valeurId={p.sous_categorie_id || null}
-              options={sousCategories}
+              options={sousCatsFiltrees}
               onSave={async id => await sauver({ sous_categorie_id: id })}
             />
             <ChampEtat etat={p.etat} onSave={async val => await sauver({ etat: val })} />
@@ -258,6 +305,10 @@ export default function FicheEditable({ produit: initial, sousCategories }: Prop
         <StatCardEditable label="Quantité">
           <ChampTexte valeur={p.quantite} type="number"
             onSave={sauverQuantite} />
+        </StatCardEditable>
+        <StatCardEditable label="Alerte stock bas">
+          <ChampTexte valeur={p.stock_min ?? 0} type="number"
+            onSave={async val => await sauver({ stock_min: parseInt(val) || 0 })} />
         </StatCardEditable>
       </div>
 

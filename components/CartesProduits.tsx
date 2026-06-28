@@ -1,9 +1,10 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Package, ChevronDown, ChevronUp, Search, X, Pencil } from 'lucide-react'
+import { Package, ChevronDown, ChevronUp, Search, X, Pencil, Camera } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { compresserImage } from '@/lib/compresserImage'
 
 interface Props {
   produits: any[]
@@ -67,28 +68,212 @@ function BadgeSousCat({ produitId, valeurId, valeurNom, options }: {
   )
 }
 
-function CarteInfo({ p, prixLieu, sousCategories }: { p: any; prixLieu?: number; sousCategories: { id: string; nom: string }[] }) {
-  const [ouvert, setOuvert] = useState(false)
-  const prixAffiché = prixLieu ?? p.prix_vente_souhaite
-  const marge = prixAffiché - p.prix_revient
-  const margePct = p.prix_revient > 0 ? Math.round((marge / p.prix_revient) * 100) : 0
+function ChampPrixCarte({ produitId, prix, onUpdate }: {
+  produitId: string
+  prix: number
+  onUpdate: (val: number) => void
+}) {
+  const [val, setVal] = useState(prix)
+  const [edition, setEdition] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  async function sauver() {
+    const num = parseFloat(String(val)) || 0
+    setEdition(false)
+    if (num === prix) return
+    setSaving(true)
+    const { error } = await supabase.from('produits').update({
+      prix_vente_souhaite: num,
+      updated_at: new Date().toISOString(),
+    }).eq('id', produitId)
+    if (!error) onUpdate(num)
+    else setVal(prix)
+    setSaving(false)
+  }
+
+  if (edition) {
+    return (
+      <input autoFocus type="number" step="0.01" min="0"
+        value={val}
+        onChange={e => setVal(parseFloat(e.target.value) || 0)}
+        onBlur={sauver}
+        onKeyDown={e => { if (e.key === 'Enter') sauver(); if (e.key === 'Escape') { setVal(prix); setEdition(false) } }}
+        style={{ width: 90, fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--color-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', padding: '2px 6px', fontFamily: 'inherit' }}
+      />
+    )
+  }
 
   return (
-    <div className="card">
-      <Link href={`/produits/${p.id}`} style={{ textDecoration: 'none', display: 'block' }}>
-        {p.photo_url ? (
-          <Image src={p.photo_url} alt={p.nom} width={300} height={225} className="card-image" />
+    <span className="card-price"
+      onClick={() => setEdition(true)}
+      title="Cliquer pour modifier le prix de vente"
+      style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+      {saving ? '…' : euro(val)}
+      <Pencil size={10} style={{ opacity: 0.35, flexShrink: 0 }} />
+    </span>
+  )
+}
+
+function ChampNomCarte({ produitId, nom, onUpdate }: {
+  produitId: string
+  nom: string
+  onUpdate: (val: string) => void
+}) {
+  const [val, setVal] = useState(nom)
+  const [edition, setEdition] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  async function sauver() {
+    const trimmed = val.trim()
+    setEdition(false)
+    if (!trimmed || trimmed === nom) { if (!trimmed) setVal(nom); return }
+    setSaving(true)
+    const { error } = await supabase.from('produits').update({
+      nom: trimmed,
+      updated_at: new Date().toISOString(),
+    }).eq('id', produitId)
+    if (!error) onUpdate(trimmed)
+    else setVal(nom)
+    setSaving(false)
+  }
+
+  if (edition) {
+    return (
+      <input autoFocus type="text" value={val}
+        onChange={e => setVal(e.target.value)}
+        onBlur={sauver}
+        onKeyDown={e => { if (e.key === 'Enter') sauver(); if (e.key === 'Escape') { setVal(nom); setEdition(false) } }}
+        className="form-input"
+        style={{ fontSize: 'var(--text-base)', fontWeight: 600, marginBottom: 4, width: '100%' }}
+      />
+    )
+  }
+
+  return (
+    <div className="card-title"
+      onClick={() => setEdition(true)}
+      title="Cliquer pour modifier le nom"
+      style={{ marginBottom: 4, cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 4 }}>
+      <span>{saving ? '…' : val}</span>
+      <Pencil size={10} style={{ opacity: 0.35, flexShrink: 0, marginTop: 3 }} />
+    </div>
+  )
+}
+
+function ChampQuantiteCarte({ produitId, quantite, stockMin, onUpdate }: {
+  produitId: string
+  quantite: number
+  stockMin: number
+  onUpdate: (val: number) => void
+}) {
+  const [val, setVal] = useState(quantite)
+  const [edition, setEdition] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  async function sauver() {
+    const num = parseInt(String(val)) || 0
+    setEdition(false)
+    if (num === quantite) return
+    setSaving(true)
+    const { error } = await supabase.from('produits').update({
+      quantite: num,
+      updated_at: new Date().toISOString(),
+    }).eq('id', produitId)
+    if (!error) onUpdate(num)
+    else setVal(quantite)
+    setSaving(false)
+  }
+
+  const couleur = val > 0 ? (stockMin > 0 && val <= stockMin ? 'var(--color-danger)' : 'var(--color-text-primary)') : 'var(--color-danger)'
+
+  if (edition) {
+    return (
+      <input autoFocus type="number" min="0" step="1" value={val}
+        onChange={e => setVal(parseInt(e.target.value) || 0)}
+        onBlur={sauver}
+        onKeyDown={e => { if (e.key === 'Enter') sauver(); if (e.key === 'Escape') { setVal(quantite); setEdition(false) } }}
+        style={{ width: 60, border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', padding: '1px 6px', fontSize: 'inherit', fontFamily: 'inherit' }}
+      />
+    )
+  }
+
+  return (
+    <span onClick={() => setEdition(true)} title="Cliquer pour modifier la quantité"
+      style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+      {saving ? '…' : <strong style={{ color: couleur }}>{val}</strong>}
+      <Pencil size={9} style={{ opacity: 0.3, flexShrink: 0 }} />
+    </span>
+  )
+}
+
+function PhotoUploadCarte({ produitId, photoUrl, nom }: {
+  produitId: string
+  photoUrl: string | null
+  nom: string
+}) {
+  const [url, setUrl] = useState(photoUrl)
+  const [uploading, setUploading] = useState(false)
+  const inputId = `photo-${produitId}`
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const compressed = await compresserImage(file)
+      const photoNom = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+      const { error: uploadError } = await supabase.storage
+        .from('images de produits')
+        .upload(photoNom, compressed, { contentType: 'image/jpeg' })
+      if (uploadError) throw uploadError
+      const { data } = supabase.storage.from('images de produits').getPublicUrl(photoNom)
+      const { error: updateError } = await supabase.from('produits').update({
+        photo_url: data.publicUrl,
+        updated_at: new Date().toISOString(),
+      }).eq('id', produitId)
+      if (!updateError) setUrl(data.publicUrl)
+    } catch (err) {
+      console.error('Upload photo:', err)
+    }
+    setUploading(false)
+    if (e.target) e.target.value = ''
+  }
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <Link href={`/produits/${produitId}`} style={{ textDecoration: 'none', display: 'block' }}>
+        {url ? (
+          <Image src={url} alt={nom} width={300} height={225} className="card-image" />
         ) : (
           <div className="card-image" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-primary-light)' }}>
             <Package size={40} color="var(--color-primary)" strokeWidth={1} />
           </div>
         )}
       </Link>
+      <label htmlFor={inputId} title="Changer la photo"
+        style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.55)', color: 'white', borderRadius: 'var(--radius)', padding: '4px 8px', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
+        {uploading ? '…' : <><Camera size={12} /> Photo</>}
+      </label>
+      <input id={inputId} type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} />
+    </div>
+  )
+}
+
+function CarteInfo({ p, prixLieu, sousCategories }: { p: any; prixLieu?: number; sousCategories: { id: string; nom: string }[] }) {
+  const [ouvert, setOuvert] = useState(false)
+  const [nomVal, setNomVal] = useState(p.nom)
+  const [quantiteVal, setQuantiteVal] = useState(p.quantite)
+  const [prixVente, setPrixVente] = useState(p.prix_vente_souhaite)
+  const prixAffiché = prixLieu ?? prixVente
+  const marge = prixAffiché - p.prix_revient
+  const margePct = p.prix_revient > 0 ? Math.round((marge / p.prix_revient) * 100) : 0
+
+  return (
+    <div className="card">
+      <PhotoUploadCarte produitId={p.id} photoUrl={p.photo_url} nom={nomVal} />
 
       <div className="card-body">
-        <Link href={`/produits/${p.id}`} style={{ textDecoration: 'none' }}>
-          <div className="card-title" style={{ marginBottom: 4 }}>{p.nom}</div>
-        </Link>
+        <ChampNomCarte produitId={p.id} nom={nomVal} onUpdate={val => setNomVal(val)} />
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
           {p.categorie && (
@@ -107,7 +292,11 @@ function CarteInfo({ p, prixLieu, sousCategories }: { p: any; prixLieu?: number;
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
           <div>
-            <span className="card-price">{euro(prixAffiché)}</span>
+            {prixLieu !== undefined ? (
+              <span className="card-price">{euro(prixAffiché)}</span>
+            ) : (
+              <ChampPrixCarte produitId={p.id} prix={prixVente} onUpdate={val => setPrixVente(val)} />
+            )}
             {prixLieu !== undefined && (
               <div style={{ fontSize: 10, color: 'var(--color-warning)', fontWeight: 500, marginTop: 1 }}>Prix lieu de vente</div>
             )}
@@ -126,7 +315,7 @@ function CarteInfo({ p, prixLieu, sousCategories }: { p: any; prixLieu?: number;
         )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
           <span className="card-meta">
-            Qté en stock : <strong style={{ color: p.quantite > 0 ? (p.stock_min > 0 && p.quantite <= p.stock_min ? 'var(--color-danger)' : 'var(--color-text-primary)') : 'var(--color-danger)' }}>{p.quantite}</strong>
+            Qté en stock : <ChampQuantiteCarte produitId={p.id} quantite={quantiteVal} stockMin={p.stock_min || 0} onUpdate={val => setQuantiteVal(val)} />
           </span>
           <button
             onClick={() => setOuvert(v => !v)}
