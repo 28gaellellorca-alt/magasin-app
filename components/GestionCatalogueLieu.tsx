@@ -3,7 +3,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { Package, Plus, X, Check, Eye, RefreshCw, ShoppingBag, MapPin } from 'lucide-react'
+import { Package, Plus, X, Check, Eye, RefreshCw, ShoppingBag, MapPin, Pencil } from 'lucide-react'
 
 function calculerPrixAjuste(prixBase: number, remise_defaut: number, type: string): number {
   if (!remise_defaut) return prixBase
@@ -88,6 +88,19 @@ export default function GestionCatalogueLieu({ lieu, produits, prixLieu: initPri
   const [venteOuverte, setVenteOuverte] = useState<string | null>(null)
   const [formVente, setFormVente] = useState<FormVente>({ prix: '', qte: '1', mode: 'especes' })
   const [chargementVente, setChargementVente] = useState(false)
+  const [editPrixId, setEditPrixId] = useState<string | null>(null)
+  const [editPrixVal, setEditPrixVal] = useState('')
+
+  async function enregistrerPrix(produitId: string) {
+    const val = parseFloat(editPrixVal)
+    if (isNaN(val) || val <= 0) return
+    await supabase.from('prix_lieu').upsert(
+      { produit_id: produitId, revendeur_id: lieu.id, prix_vente: val },
+      { onConflict: 'produit_id,revendeur_id' }
+    )
+    setPrixLieu(prev => [...prev.filter(pl => pl.produit_id !== produitId), { produit_id: produitId, prix_vente: val }])
+    setEditPrixId(null)
+  }
 
   const aAjustement = !!lieu.remise_defaut
   const ajustLabel = aAjustement
@@ -268,12 +281,29 @@ export default function GestionCatalogueLieu({ lieu, produits, prixLieu: initPri
                         <div style={{ fontSize: 10, color: 'var(--color-text-muted)', fontStyle: 'italic' }}>prix calculé automatiquement</div>
                       )}
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{euro(prix)}</div>
-                      <div style={{ fontSize: 'var(--text-xs)', color: marge >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                        marge {euro(marge)}
+                    {editPrixId === p.id ? (
+                      <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
+                        <input className="form-input" type="number" step="0.01" min="0" autoFocus
+                          value={editPrixVal} onChange={e => setEditPrixVal(e.target.value)}
+                          style={{ width: 80, minHeight: 32 }} />
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-success)' }} onClick={() => enregistrerPrix(p.id)}><Check size={16} /></button>
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }} onClick={() => setEditPrixId(null)}><X size={16} /></button>
                       </div>
-                    </div>
+                    ) : (
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                          <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{euro(prix)}</span>
+                          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: 2 }}
+                            title="Modifier le prix pour ce lieu"
+                            onClick={() => { setEditPrixId(p.id); setEditPrixVal(prix.toFixed(2)) }}>
+                            <Pencil size={12} />
+                          </button>
+                        </div>
+                        <div style={{ fontSize: 'var(--text-xs)', color: marge >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                          marge {euro(marge)}
+                        </div>
+                      </div>
+                    )}
                     <button
                       className="btn btn-primary"
                       style={{ minHeight: 36, padding: '6px 12px', fontSize: 'var(--text-xs)', gap: 4, flexShrink: 0 }}
@@ -325,12 +355,29 @@ export default function GestionCatalogueLieu({ lieu, produits, prixLieu: initPri
                         {p.categorie?.nom} · Stock : {p.quantite}
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{euro(prix)}</div>
-                      <div style={{ fontSize: 'var(--text-xs)', color: marge >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                        marge {euro(marge)}
+                    {editPrixId === p.id ? (
+                      <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
+                        <input className="form-input" type="number" step="0.01" min="0" autoFocus
+                          value={editPrixVal} onChange={e => setEditPrixVal(e.target.value)}
+                          style={{ width: 80, minHeight: 32 }} />
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-success)' }} onClick={() => enregistrerPrix(p.id)}><Check size={16} /></button>
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }} onClick={() => setEditPrixId(null)}><X size={16} /></button>
                       </div>
-                    </div>
+                    ) : (
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                          <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{euro(prix)}</span>
+                          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: 2 }}
+                            title="Modifier le prix pour ce lieu"
+                            onClick={() => { setEditPrixId(p.id); setEditPrixVal(prix.toFixed(2)) }}>
+                            <Pencil size={12} />
+                          </button>
+                        </div>
+                        <div style={{ fontSize: 'var(--text-xs)', color: marge >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                          marge {euro(marge)}
+                        </div>
+                      </div>
+                    )}
                     <button
                       className="btn btn-primary"
                       style={{ minHeight: 36, padding: '6px 12px', fontSize: 'var(--text-xs)', gap: 4, flexShrink: 0 }}
