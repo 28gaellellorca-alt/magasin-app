@@ -42,6 +42,9 @@ function CarteInfo({ p, prixLieu }: { p: any; prixLieu?: number }) {
           {p.categorie && (
             <span className="badge badge-primary">{p.categorie.nom}</span>
           )}
+          {p.sous_categorie && (
+            <span className="badge badge-neutral" style={{ fontStyle: 'italic' }}>{p.sous_categorie.nom}</span>
+          )}
           <span className={`badge ${p.etat === 'disponible' ? 'badge-success' : p.etat === 'vendu' ? 'badge-neutral' : 'badge-warning'}`}>
             {p.etat === 'disponible' ? 'Disponible' : p.etat === 'vendu' ? 'Vendu' : 'Réservé'}
           </span>

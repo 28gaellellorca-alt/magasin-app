@@ -271,6 +271,105 @@ Impact attendu : marge globale réelle sur le tableau de bord et le récap URSSA
 
 ---
 
+## Créer des fiches produit depuis des photos WhatsApp
+
+Quand l'utilisatrice envoie un lot de photos pour créer des articles en masse, suivre cette procédure :
+
+### Étape 1 — Redimensionner les photos
+Les photos WhatsApp font ~3000-4000px. L'API refuse les images >2000px en contexte multi-images. Redimensionner à 800px max via PowerShell avant d'analyser.
+
+```powershell
+$src = "C:\chemin\vers\les\photos"
+$dst = "C:\chemin\vers\photos_redim"
+New-Item -ItemType Directory -Force $dst
+Add-Type -AssemblyName System.Drawing
+foreach ($f in Get-ChildItem "$src\*.jpg","$src\*.jpeg","$src\*.png") {
+  $img = [System.Drawing.Image]::FromFile($f.FullName)
+  $ratio = [Math]::Min(800.0/$img.Width, 800.0/$img.Height)
+  if ($ratio -lt 1) {
+    $w = [int]($img.Width * $ratio); $h = [int]($img.Height * $ratio)
+    $bmp = New-Object System.Drawing.Bitmap($w, $h)
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    $g.DrawImage($img, 0, 0, $w, $h)
+    $g.Dispose(); $img.Dispose()
+    $bmp.Save("$dst\$($f.Name)", [System.Drawing.Imaging.ImageFormat]::Jpeg)
+    $bmp.Dispose()
+  } else { Copy-Item $f.FullName "$dst\$($f.Name)" }
+}
+```
+
+### Étape 2 — Analyser les photos avec un Agent (contexte frais)
+Si beaucoup de photos (>10), utiliser `Agent` avec un contexte frais pour ne pas saturer la session :
+
+```
+Agent({
+  description: "Analyse photos produits",
+  prompt: "Lis les images dans C:\\...\\photos_redim\\, liste chacune avec son nom de fichier, décris l'objet visible (type, matière, couleur), propose catégorie (Bijoux/Déco maison/Textile/Enfant-Bébé/Accessoires/Beauté), sous-catégorie, nom d'article et prix de vente suggéré. Retourne un tableau."
+})
+```
+
+### Étape 3 — Script d'import `.mjs`
+Créer `import-produits.mjs` à la racine de `magasin-app` (ES Module, pas CommonJS) :
+
+```js
+import { readFileSync, readdirSync } from 'fs'
+import { createClient } from '@supabase/supabase-js'
+
+const env = Object.fromEntries(readFileSync('.env.local','utf8').trim().split('\n').map(l=>l.split('=')))
+const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+
+// 1. Récupérer les catégories au runtime
+const { data: cats } = await supabase.from('categories').select('id,nom')
+const catByName = Object.fromEntries(cats.map(c=>[c.nom, c.id]))
+
+// 2. Liste des photos triées
+const photos = readdirSync('C:\\...\\photos_redim').filter(f=>f.match(/\.(jpg|jpeg|png)$/i)).sort()
+
+// 3. Tableau des produits (un objet par article)
+const produits = [
+  { nom: 'Nom article', prix_achat: 5, prix_vente_souhaite: 15, categorie: 'Bijoux', notes: '' },
+  // ...
+]
+
+// 4. Import
+for (let i = 0; i < produits.length; i++) {
+  const p = produits[i]
+  const photoPath = photos[i]
+  // Upload photo
+  const photoBytes = readFileSync(`C:\\...\\photos_redim\\${photoPath}`)
+  const photoName = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+  await supabase.storage.from('images de produits').upload(photoName, photoBytes, { contentType: 'image/jpeg' })
+  const { data: urlData } = supabase.storage.from('images de produits').getPublicUrl(photoName)
+  // Insert produit
+  const frais = p.frais_annexes || 0
+  await supabase.from('produits').insert({
+    nom: p.nom, prix_achat: p.prix_achat, frais_annexes: frais,
+    prix_revient: p.prix_achat + frais, prix_vente_souhaite: p.prix_vente_souhaite,
+    categorie_id: catByName[p.categorie], etat: 'disponible', quantite: p.quantite || 1,
+    photo_url: urlData.publicUrl, notes: p.notes || null, fournisseur: p.fournisseur || null,
+  })
+  console.log(`[${i+1}/${produits.length}] ${p.nom}`)
+  await new Promise(r => setTimeout(r, 250))
+}
+console.log('=== Terminé ===')
+```
+
+Lancer dans le terminal VS Code depuis le dossier `magasin-app` :
+```bash
+node import-produits.mjs
+```
+
+Supprimer le fichier après usage (ne jamais le committer).
+
+### Points de vigilance
+- Bucket Storage s'appelle exactement `images de produits` (avec espaces)
+- Toujours utiliser `.mjs` (ESM), pas `.js` (CommonJS)
+- Le script lit `.env.local` directement — ne pas hardcoder les clés
+- Les photos WhatsApp sont souvent trop grandes pour être lues en masse dans la session principale → toujours passer par `Agent` ou redimensionner d'abord
+- Si la session est saturée d'images (beaucoup de preview_screenshot), ouvrir une nouvelle conversation avant d'envoyer des photos à analyser
+
+---
+
 ## Fonctionnalités livrées (historique)
 
 - **Marchés & événements** (`/evenements`, `/evenements/[lieu_id]`) — bilan par lieu, enregistrement d'événements avec frais, rattachement automatique des ventes par date+lieu
@@ -278,3 +377,5 @@ Impact attendu : marge globale réelle sur le tableau de bord et le récap URSSA
 - **Annulation dépôt depuis catalogue** — bouton X dans la section "En dépôt ici"
 - **Page Ventes enrichie** — panier moyen, filtre par lieu, répartitions espèces/carte et direct/lieu
 - **Guide refondu** — toutes les fonctionnalités documentées, visible sur mobile
+- **Sous-catégorie visible sur les cartes produit** — badge affiché directement sans ouvrir "Détails"
+- **Édition inline sur la fiche produit** — `FicheEditable.tsx` : cliquer sur n'importe quelle valeur (nom, prix, quantité, état, notes, fournisseur) pour la modifier directement sans naviguer vers `/modifier`

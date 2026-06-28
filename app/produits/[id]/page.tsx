@@ -3,11 +3,11 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Package, Edit } from 'lucide-react'
+import { ArrowLeft, Package } from 'lucide-react'
 import BoutonVente from '@/components/BoutonVente'
 import BoutonAnnulerVente from '@/components/BoutonAnnulerVente'
-import BoutonSupprimerProduit from '@/components/BoutonSupprimerProduit'
 import BoutonDepot from '@/components/BoutonDepot'
+import FicheEditable from '@/components/FicheEditable'
 
 async function getProduit(id: string) {
   const { data } = await supabase
@@ -33,15 +33,21 @@ async function getRevendeurs() {
   return data || []
 }
 
+async function getSousCategories() {
+  const { data } = await supabase.from('sous_categories').select('*').order('nom')
+  return data || []
+}
+
 function euro(val: number) {
   return val.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
 }
 
 export default async function FicheProduit({ params }: { params: { id: string } }) {
-  const [produit, ventes, revendeurs] = await Promise.all([
+  const [produit, ventes, revendeurs, sousCategories] = await Promise.all([
     getProduit(params.id),
     getVentes(params.id),
     getRevendeurs(),
+    getSousCategories(),
   ])
 
   if (!produit) notFound()
@@ -49,9 +55,6 @@ export default async function FicheProduit({ params }: { params: { id: string } 
   const lieuDepot = produit.lieu_depot_id
     ? (revendeurs.find((r: any) => r.id === produit.lieu_depot_id) || null)
     : null
-
-  const marge = produit.prix_vente_souhaite - produit.prix_revient
-  const margePct = produit.prix_revient > 0 ? Math.round((marge / produit.prix_revient) * 100) : 0
 
   return (
     <div className="page-container" style={{ maxWidth: 720 }}>
@@ -71,70 +74,7 @@ export default async function FicheProduit({ params }: { params: { id: string } 
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', gap: 'var(--space-4)' }}>
-        <div>
-          <h1 className="page-title">{produit.nom}</h1>
-          <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 6, flexWrap: 'wrap' }}>
-            {produit.categorie && <span className="badge badge-primary">{produit.categorie.nom}</span>}
-            {produit.sous_categorie && <span className="badge badge-neutral">{produit.sous_categorie.nom}</span>}
-            <span className={`badge ${produit.etat === 'disponible' ? 'badge-success' : produit.etat === 'vendu' ? 'badge-neutral' : 'badge-warning'}`}>
-              {produit.etat === 'disponible' ? 'Disponible' : produit.etat === 'vendu' ? 'Vendu' : 'Réservé'}
-            </span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-          <Link href={`/produits/${produit.id}/modifier`} className="btn btn-secondary btn-sm">
-            <Edit size={14} /> Modifier
-          </Link>
-          <BoutonSupprimerProduit produitId={produit.id} photoUrl={produit.photo_url} />
-        </div>
-      </div>
-
-      {/* Bloc marges */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-5)' }}>
-        <div className="stat-card">
-          <div className="stat-label">Prix d'achat</div>
-          <div className="stat-value">{euro(produit.prix_achat)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Frais annexes</div>
-          <div className="stat-value">{euro(produit.frais_annexes)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Prix de revient</div>
-          <div className="stat-value" style={{ color: 'var(--color-primary)' }}>{euro(produit.prix_revient)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Prix de vente souhaité</div>
-          <div className="stat-value">{euro(produit.prix_vente_souhaite)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Marge</div>
-          <div className="stat-value" style={{ color: marge >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-            {euro(marge)}
-          </div>
-          <div className="stat-sub">{margePct}% du prix de revient</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Quantité</div>
-          <div className="stat-value">{produit.quantite}</div>
-        </div>
-      </div>
-
-      {(produit.fournisseur || produit.notes) && (
-        <div style={{ background: 'var(--color-accent-light)', borderRadius: 'var(--radius)', padding: 'var(--space-4)', marginBottom: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-          {produit.fournisseur && (
-            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-              <strong>Acheté à :</strong> {produit.fournisseur}
-            </p>
-          )}
-          {produit.notes && (
-            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-              <strong>Notes :</strong> {produit.notes}
-            </p>
-          )}
-        </div>
-      )}
+      <FicheEditable produit={produit} sousCategories={sousCategories} />
 
       {produit.etat === 'disponible' && (
         <div style={{ marginBottom: 'var(--space-4)' }}>
