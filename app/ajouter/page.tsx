@@ -11,8 +11,14 @@ async function getSousCategories() {
   return data || []
 }
 
+async function getFournisseurs() {
+  const { data } = await supabase.from('produits').select('fournisseur').not('fournisseur', 'is', null)
+  if (!data) return []
+  return Array.from(new Set(data.map((d: any) => d.fournisseur).filter(Boolean))).sort() as string[]
+}
+
 export default async function AjouterPage() {
-  const [categories, sousCategories] = await Promise.all([getCategories(), getSousCategories()])
+  const [categories, sousCategories, fournisseurs] = await Promise.all([getCategories(), getSousCategories(), getFournisseurs()])
   return (
     <div className="page-container">
       <div className="page-header">
@@ -23,7 +29,7 @@ export default async function AjouterPage() {
           </p>
         </div>
       </div>
-      <FormulaireAjout categories={categories} sousCategories={sousCategories} />
+      <FormulaireAjout categories={categories} sousCategories={sousCategories} fournisseurs={fournisseurs} />
     </div>
   )
 }

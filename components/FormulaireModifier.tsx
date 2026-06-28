@@ -10,9 +10,9 @@ function euro(val: number) {
   return val.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
 }
 
-interface Props { produit: any; categories: any[]; sousCategories: any[] }
+interface Props { produit: any; categories: any[]; sousCategories: any[]; fournisseurs: string[] }
 
-export default function FormulaireModifier({ produit, categories, sousCategories }: Props) {
+export default function FormulaireModifier({ produit, categories, sousCategories, fournisseurs }: Props) {
   const inputFichier = useRef<HTMLInputElement>(null)
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
@@ -204,8 +204,14 @@ export default function FormulaireModifier({ produit, categories, sousCategories
       <div className="form-group">
         <label className="form-label">Acheté à / Source</label>
         <input className="form-input" type="text"
+          list="fournisseurs-list"
           placeholder="Ex : Vinted — Marie, Brocante Bordeaux…"
           value={form.fournisseur} onChange={e => majChamp('fournisseur', e.target.value)} />
+        {fournisseurs.length > 0 && (
+          <datalist id="fournisseurs-list">
+            {fournisseurs.map(f => <option key={f} value={f} />)}
+          </datalist>
+        )}
       </div>
 
       <div className="form-group">
