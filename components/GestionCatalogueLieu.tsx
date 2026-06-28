@@ -3,7 +3,16 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { Package, Plus, X, Check, Eye } from 'lucide-react'
+import { Package, Plus, X, Check, Eye, RefreshCw } from 'lucide-react'
+
+function calculerPrixAjuste(prixBase: number, remise_defaut: number, type: string): number {
+  if (!remise_defaut) return prixBase
+  const val = Math.abs(remise_defaut)
+  if (type === 'euro') {
+    return remise_defaut > 0 ? Math.max(0, prixBase - val) : prixBase + val
+  }
+  return remise_defaut > 0 ? prixBase * (1 - val / 100) : prixBase * (1 + val / 100)
+}
 
 interface Props {
   lieu: any
@@ -20,6 +29,33 @@ export default function GestionCatalogueLieu({ lieu, produits, prixLieu: initPri
   const [ajoutEnCours, setAjoutEnCours] = useState<Record<string, string>>({})
   const [sauvegarde, setSauvegarde] = useState<Record<string, boolean>>({})
   const [recherche, setRecherche] = useState('')
+  const [recalcul, setRecalcul] = useState(false)
+
+  const aAjustement = !!lieu.remise_defaut
+  const ajustLabel = aAjustement
+    ? `${lieu.remise_defaut > 0 ? 'Remise' : 'Augmentation'} automatique de ${Math.abs(lieu.remise_defaut)}${lieu.remise_defaut_type === 'euro' ? '€' : '%'}`
+    : null
+
+  function prixSuggere(p: any): string {
+    if (!aAjustement) return ''
+    return calculerPrixAjuste(p.prix_vente_souhaite, lieu.remise_defaut, lieu.remise_defaut_type || 'pct').toFixed(2)
+  }
+
+  async function recalculerTout() {
+    if (!aAjustement || dansCatalogue.length === 0) return
+    setRecalcul(true)
+    const nouveauxPrix = dansCatalogue.map(p => ({
+      produit_id: p.id,
+      revendeur_id: lieu.id,
+      prix_vente: parseFloat(calculerPrixAjuste(p.prix_vente_souhaite, lieu.remise_defaut, lieu.remise_defaut_type || 'pct').toFixed(2)),
+    }))
+    await supabase.from('prix_lieu').upsert(nouveauxPrix, { onConflict: 'produit_id,revendeur_id' })
+    setPrixLieu(prev => {
+      const autres = prev.filter(pl => !nouveauxPrix.some(n => n.produit_id === pl.produit_id))
+      return [...autres, ...nouveauxPrix.map(n => ({ produit_id: n.produit_id, prix_vente: n.prix_vente }))]
+    })
+    setRecalcul(false)
+  }
 
   const dansCatalogue = produits.filter(p => prixLieu.some(pl => pl.produit_id === p.id))
   const horsCatalogue = produits.filter(p =>
@@ -59,17 +95,34 @@ export default function GestionCatalogueLieu({ lieu, produits, prixLieu: initPri
 
   return (
     <div>
-      {/* En-tête avec lien aperçu */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-5)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
-        <div>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
-            {dansCatalogue.length} article{dansCatalogue.length > 1 ? 's' : ''} dans ce catalogue
-          </p>
-        </div>
+      {/* En-tête */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: ajustLabel ? 'var(--space-3)' : 'var(--space-5)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+          {dansCatalogue.length} article{dansCatalogue.length > 1 ? 's' : ''} dans ce catalogue
+        </p>
         <Link href={`/catalogue/${lieu.id}/apercu`} className="btn btn-accent" style={{ gap: 6 }}>
           <Eye size={16} /> Aperçu partageable
         </Link>
       </div>
+
+      {/* Bannière ajustement actif */}
+      {ajustLabel && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-2)', background: 'var(--color-warning-light)', border: '1px solid var(--color-warning)', borderRadius: 'var(--radius)', padding: 'var(--space-3) var(--space-4)', marginBottom: 'var(--space-5)' }}>
+          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-warning)', fontWeight: 500 }}>
+            {ajustLabel} configurée sur ce lieu
+          </span>
+          {dansCatalogue.length > 0 && (
+            <button
+              className="btn btn-secondary"
+              style={{ fontSize: 'var(--text-xs)', minHeight: 32, padding: '4px 12px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              onClick={recalculerTout}
+              disabled={recalcul}
+            >
+              <RefreshCw size={13} /> {recalcul ? 'Calcul…' : 'Recalculer tous les prix'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Produits dans le catalogue */}
       {dansCatalogue.length > 0 && (

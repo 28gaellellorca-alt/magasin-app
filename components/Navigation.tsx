@@ -1,12 +1,11 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, PlusCircle, ShoppingBag, BarChart2, Settings, Receipt, BookOpen, CalendarDays } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, BarChart2, Settings, Receipt, BookOpen, CalendarDays } from 'lucide-react'
 
 const liens = [
   { href: '/',            label: 'Accueil',    icone: LayoutDashboard, mobileOnly: false },
   { href: '/produits',    label: 'Stock',      icone: Package,         mobileOnly: false },
-  { href: '/ajouter',     label: 'Ajouter',    icone: PlusCircle,      mobileOnly: false },
   { href: '/ventes',      label: 'Ventes',     icone: ShoppingBag,     mobileOnly: false },
   { href: '/evenements',  label: 'Marchés',    icone: CalendarDays,    mobileOnly: false },
   { href: '/stats',       label: 'Stats',      icone: BarChart2,       mobileOnly: false },
@@ -78,12 +77,15 @@ export default function Navigation() {
 
       {/* Navigation mobile — barre en bas (Guide masqué sur mobile) */}
       <nav className="nav-bottom">
-        {liens.filter(l => !l.mobileOnly).map(({ href, label, icone: Icone }) => (
-          <Link key={href} href={href} className={`nav-item${pathname === href ? ' active' : ''}`}>
-            <Icone size={22} strokeWidth={1.8} />
-            <span>{label}</span>
-          </Link>
-        ))}
+        {liens.filter(l => !l.mobileOnly).map(({ href, label, icone: Icone }) => {
+          const actif = href === '/' ? pathname === '/' : pathname.startsWith(href)
+          return (
+            <Link key={href} href={href} className={`nav-item${actif ? ' active' : ''}`}>
+              <Icone size={22} strokeWidth={1.8} />
+              <span>{label}</span>
+            </Link>
+          )
+        })}
       </nav>
 
       {/* Navigation desktop — barre latérale sombre avec logo */}
@@ -93,12 +95,15 @@ export default function Navigation() {
             <LogoPepitesSidebar />
           </Link>
         </div>
-        {liens.map(({ href, label, icone: Icone }) => (
-          <Link key={href} href={href} className={`nav-sidebar-item${pathname === href ? ' active' : ''}`}>
-            <Icone size={20} strokeWidth={1.8} />
-            <span>{label}</span>
-          </Link>
-        ))}
+        {liens.map(({ href, label, icone: Icone }) => {
+          const actif = href === '/' ? pathname === '/' : pathname.startsWith(href)
+          return (
+            <Link key={href} href={href} className={`nav-sidebar-item${actif ? ' active' : ''}`}>
+              <Icone size={20} strokeWidth={1.8} />
+              <span>{label}</span>
+            </Link>
+          )
+        })}
       </nav>
     </>
   )

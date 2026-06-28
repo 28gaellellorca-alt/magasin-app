@@ -35,11 +35,12 @@ type FormLieu = {
   commission_valeur: string
   ajustement_type: 'remise' | 'augmentation'
   ajustement_valeur: string
+  ajustement_unite: 'pct' | 'euro'
 }
 
 const formVide: FormLieu = {
   nom: '', commission_type: 'pourcentage', commission_valeur: '',
-  ajustement_type: 'remise', ajustement_valeur: '',
+  ajustement_type: 'remise', ajustement_valeur: '', ajustement_unite: 'pct',
 }
 
 function formDepuisLieu(r: any): FormLieu {
@@ -50,6 +51,7 @@ function formDepuisLieu(r: any): FormLieu {
     commission_valeur: r.commission_valeur?.toString() || '',
     ajustement_type: ajustement < 0 ? 'augmentation' : 'remise',
     ajustement_valeur: ajustement !== 0 ? Math.abs(ajustement).toString() : '',
+    ajustement_unite: r.remise_defaut_type === 'euro' ? 'euro' : 'pct',
   }
 }
 
@@ -109,10 +111,26 @@ function FormulaireLieu({ f, setF, onValider, onAnnuler, labelBouton, chargement
               </button>
             ))}
           </div>
-          <input className="form-input" type="number" step="1" min="0" max="100"
-            placeholder="Ex : 10 (facultatif)"
-            value={f.ajustement_valeur}
-            onChange={e => setF(prev => ({ ...prev, ajustement_valeur: e.target.value }))} />
+          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+            <input className="form-input" type="number" step="0.01" min="0"
+              placeholder={`Ex : ${f.ajustement_unite === 'pct' ? '10' : '2'} (facultatif)`}
+              value={f.ajustement_valeur}
+              onChange={e => setF(prev => ({ ...prev, ajustement_valeur: e.target.value }))}
+              style={{ flex: 1 }} />
+            {(['pct', 'euro'] as const).map(u => (
+              <button key={u} type="button"
+                onClick={() => setF(prev => ({ ...prev, ajustement_unite: u, ajustement_valeur: '' }))}
+                style={{
+                  padding: '5px 10px', borderRadius: 'var(--radius)', cursor: 'pointer', fontSize: 'var(--text-xs)',
+                  border: `2px solid ${f.ajustement_unite === u ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                  background: f.ajustement_unite === u ? 'var(--color-primary-light)' : 'var(--color-surface)',
+                  color: f.ajustement_unite === u ? 'var(--color-primary-dark)' : 'var(--color-text-secondary)',
+                  fontWeight: f.ajustement_unite === u ? 600 : 400, minHeight: 36,
+                }}>
+                {u === 'pct' ? '%' : '€'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -155,6 +173,7 @@ export default function GestionRevendeurs({ revendeurs: init }: Props) {
       commission_type: form.commission_type,
       commission_valeur: val,
       remise_defaut: remiseDefautDepuisForm(form),
+      remise_defaut_type: form.ajustement_valeur ? form.ajustement_unite : 'pct',
     }).select().single()
     if (!error && data) {
       setLieux(l => [...l, data])
@@ -172,6 +191,7 @@ export default function GestionRevendeurs({ revendeurs: init }: Props) {
       commission_type: formEdit.commission_type,
       commission_valeur: val,
       remise_defaut: remiseDefautDepuisForm(formEdit),
+      remise_defaut_type: formEdit.ajustement_valeur ? formEdit.ajustement_unite : 'pct',
     }).eq('id', id).select().single()
     if (!error && data) {
       setLieux(l => l.map(r => r.id === id ? data : r))

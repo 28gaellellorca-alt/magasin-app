@@ -294,20 +294,23 @@ export default function BoutonVente({ produitId, produitNom, photoUrl, prixSouha
               onChange={e => {
                 const lieu = revendeurs.find(r => r.id === e.target.value)
                 const ajustement = lieu?.remise_defaut || 0
+                const ajustType = lieu?.remise_defaut_type || 'pct'
                 const updates: any = { revendeur_id: e.target.value }
-                if (ajustement > 0) {
-                  updates.remise = ajustement.toString()
-                  updates.ajustement_type = 'reduction'
-                  updates.ajustement_unite = 'pct'
-                  updates.ajustement_valeur = ajustement.toString()
-                  updates.prix_vente_reel = (prixSouhaite * (1 - ajustement / 100)).toFixed(2)
-                } else if (ajustement < 0) {
+                if (ajustement !== 0) {
                   const val = Math.abs(ajustement)
-                  updates.remise = ''
-                  updates.ajustement_type = 'augmentation'
-                  updates.ajustement_unite = 'pct'
+                  const isRemise = ajustement > 0
+                  const unite: 'pct' | 'eur' = ajustType === 'euro' ? 'eur' : 'pct'
+                  let prixAjuste: number
+                  if (ajustType === 'euro') {
+                    prixAjuste = isRemise ? Math.max(0, prixSouhaite - val) : prixSouhaite + val
+                  } else {
+                    prixAjuste = isRemise ? prixSouhaite * (1 - val / 100) : prixSouhaite * (1 + val / 100)
+                  }
+                  updates.ajustement_type = isRemise ? 'reduction' : 'augmentation'
+                  updates.ajustement_unite = unite
                   updates.ajustement_valeur = val.toString()
-                  updates.prix_vente_reel = (prixSouhaite * (1 + val / 100)).toFixed(2)
+                  updates.remise = isRemise && unite === 'pct' ? val.toString() : ''
+                  updates.prix_vente_reel = prixAjuste.toFixed(2)
                 }
                 setForm(f => ({ ...f, ...updates }))
               }}>
