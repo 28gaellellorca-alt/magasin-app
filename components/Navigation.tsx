@@ -1,17 +1,18 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, PlusCircle, ShoppingBag, BarChart2, Settings, Receipt, BookOpen } from 'lucide-react'
+import { LayoutDashboard, Package, PlusCircle, ShoppingBag, BarChart2, Settings, Receipt, BookOpen, CalendarDays } from 'lucide-react'
 
 const liens = [
-  { href: '/',           label: 'Accueil',   icone: LayoutDashboard },
-  { href: '/produits',   label: 'Stock',     icone: Package },
-  { href: '/ajouter',    label: 'Ajouter',   icone: PlusCircle },
-  { href: '/ventes',     label: 'Ventes',    icone: ShoppingBag },
-  { href: '/stats',      label: 'Stats',     icone: BarChart2 },
-  { href: '/urssaf',     label: 'Récap',     icone: Receipt },
-  { href: '/parametres', label: 'Réglages',  icone: Settings },
-  { href: '/guide',      label: 'Guide',     icone: BookOpen },
+  { href: '/',            label: 'Accueil',    icone: LayoutDashboard, mobileOnly: false },
+  { href: '/produits',    label: 'Stock',      icone: Package,         mobileOnly: false },
+  { href: '/ajouter',     label: 'Ajouter',    icone: PlusCircle,      mobileOnly: false },
+  { href: '/ventes',      label: 'Ventes',     icone: ShoppingBag,     mobileOnly: false },
+  { href: '/evenements',  label: 'Marchés',    icone: CalendarDays,    mobileOnly: false },
+  { href: '/stats',       label: 'Stats',      icone: BarChart2,       mobileOnly: false },
+  { href: '/urssaf',      label: 'Récap',      icone: Receipt,         mobileOnly: false },
+  { href: '/parametres',  label: 'Réglages',   icone: Settings,        mobileOnly: false },
+  { href: '/guide',       label: 'Guide',      icone: BookOpen,        mobileOnly: true  },
 ]
 
 function LogoPepitesSidebar() {
@@ -75,9 +76,9 @@ export default function Navigation() {
         </Link>
       </header>
 
-      {/* Navigation mobile — barre en bas */}
+      {/* Navigation mobile — barre en bas (Guide masqué sur mobile) */}
       <nav className="nav-bottom">
-        {liens.map(({ href, label, icone: Icone }) => (
+        {liens.filter(l => !l.mobileOnly).map(({ href, label, icone: Icone }) => (
           <Link key={href} href={href} className={`nav-item${pathname === href ? ' active' : ''}`}>
             <Icone size={22} strokeWidth={1.8} />
             <span>{label}</span>
