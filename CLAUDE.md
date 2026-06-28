@@ -18,12 +18,13 @@ Application web de gestion de stock pour une boutique artisanale fait main ("Les
 |---|---|---|---|
 | `v1-stable` | `d569e81` | 28 juin 2026 | Première version fonctionnelle complète |
 | `v2-stable` | `5a9f9bf` | 28 juin 2026 | Lieux de vente (édition, augmentation auto), catalogue par lieu, aperçu partageable, fournisseur, alertes stock bas, guide intégré |
-| *(en cours)* | `2dceec6` | 28 juin 2026 | Marchés/événements, dépôt depuis le catalogue, annulation dépôt depuis catalogue, page Ventes enrichie (panier moyen, filtre lieu, répartitions), guide refondu + visible mobile, fix aperçu partageable |
+| `v3-stable` | `d3fdc36` | 28 juin 2026 | Marchés/événements, fiche produit éditable inline (FicheEditable), badge sous-catégorie sur cartes, sous-catégorie assignable depuis la fiche, import photos WhatsApp en masse |
 
 En cas de régression grave, revenir à une version stable :
 
 ```bash
-git checkout v2-stable   # version actuelle recommandée
+git checkout v3-stable   # version actuelle recommandée
+git checkout v2-stable   # version précédente stable
 git checkout v1-stable   # version de base si besoin
 ```
 
@@ -166,6 +167,7 @@ Les pages serveur chargent les données puis les passent en props aux composants
 - `FormulaireAjout.tsx` / `FormulaireModifier.tsx` — upload photo vers Supabase Storage avec compression automatique (max 1200px, JPEG 82%) via `lib/compresserImage.ts`
 - `GestionCategories.tsx` / `GestionRevendeurs.tsx` — CRUD dans les réglages (GestionRevendeurs gère les "lieux de vente" malgré le nom du fichier). GestionRevendeurs inclut un mode édition inline (crayon) et un lien "Catalogue" vers `/catalogue/[lieu.id]`
 - `GestionCatalogueLieu.tsx` — gestion du catalogue d'un lieu : ajouter/retirer des produits avec prix spécifiques, **déposer directement depuis le catalogue** (bouton "Déposer" + mini-formulaire `MiniFormDepot` défini HORS du parent), **annuler un dépôt depuis le catalogue** (bouton X), lien vers l'aperçu partageable. `MiniFormDepot` doit rester défini EN DEHORS du composant parent sinon il se re-monte à chaque render.
+- `FicheEditable.tsx` — édition inline sur la fiche produit (`/produits/[id]`). Contient trois primitives définies HORS du composant principal : `ChampTexte` (input texte/nombre, inline), `ChampEtat` (dropdown badge état), `ChampSelect` (dropdown sous-catégorie). Reçoit `produit` + `sousCategories` en props depuis la page serveur. Toutes les sauvegardes passent par `supabase.from('produits').update(...)` sans rechargement de page.
 
 ### Base de données Supabase
 
