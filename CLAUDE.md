@@ -386,6 +386,149 @@ Supprimer le fichier après usage (ne jamais le committer).
 
 ---
 
+## Skills disponibles pour ce projet
+
+| Skill | Déclencheur | Rôle |
+|---|---|---|
+| `/creer-fiche-produit` | Photo produit, "crée la fiche", "quel prix", "ajoute ce produit" | Analyse visuelle + recherche marché + 3 prix + note Supabase prête à copier |
+| `/optimiser-prix` | "optimise mes prix", "mes marges sont faibles", analyse globale du stock | Analyse et ajustement des prix de tout le stock |
+
+Documentation complète des skills : `C:\Users\Utilisateur\Desktop\DOSSIER CLAUDE\magasin\skills-appli-magasin\`
+
+---
+
+## Optimisation des prix — procédure
+
+La skill `/optimiser-prix` permet d'analyser et d'ajuster les prix de vente de tout le stock.
+
+### Quand l'utiliser
+
+- Avant un marché ou un événement
+- Quand un article ne se vend pas (prix peut-être trop haut)
+- Régulièrement (tous les 3-6 mois) pour rester alignée avec le marché
+
+### Règles de base — multiplicateurs artisanat
+
+| Multiplicateur | Niveau | Action |
+|---|---|---|
+| < 2× | Danger | Changer immédiatement |
+| 2× à 2,5× | Trop bas | Augmenter |
+| 2,5× à 3× | Limite | Surveiller, vérifier le marché |
+| 3× à 4× | Correct | Bon |
+| > 4× | Excellent | Ne pas toucher |
+
+Le multiplicateur = `prix_vente_souhaite ÷ prix_revient`. Le minimum artisanat fait main est **3×** — en dessous, le temps de travail n'est pas couvert.
+
+**Exception** : articles de revente (non faits main) — 2,5× est acceptable.
+
+### Procédure complète
+
+**Étape 1 — Lancer l'analyse**
+
+Taper `/optimiser-prix` dans Claude Code. La skill :
+1. Récupère tous les articles non vendus depuis Supabase via script `.mjs` temporaire
+2. Calcule les multiplicateurs
+3. Classe les articles par niveau (Danger / Trop bas / Limite / OK)
+
+**Étape 2 — Recherche marché (avant tout changement)**
+
+Pour chaque groupe d'articles à revoir, faire des recherches web :
+- Etsy France (`site:etsy.com/fr + type d'article + crochet/artisanal + prix`)
+- Un Grand Marché (`site:ungrandmarche.fr + type d'article`)
+- Leboncoin, Vinted pour les articles de revente
+
+Plateformes de référence confirmées :
+- Lampes upcycling : `ungrandmarche.fr`, `lumaicreation.com`, `rouspette.com`, `nineartiste.com`
+- Bijoux/accessoires crochet : `etsy.com/fr`
+- Déco Noël crochet : `ungrandmarche.fr`
+- Brûle-parfum/céramique artisanal : `petitvallauris.com`
+
+**Étape 3 — Décision prix**
+
+Principe : **ne jamais proposer un prix si le marché ne le valide pas**, même si le multiplicateur l'exige. Mieux vaut rester à 2,8× vendable qu'à 3× invendable.
+
+Pour les articles en zone "Limite" (2,5×–3×), chercher sur le marché avant de toucher.
+
+**Étape 4 — Mise à jour Supabase**
+
+Script `.mjs` temporaire avec `supabase.from('produits').update({ prix_vente_souhaite: X })`. Toujours supprimer le script après usage.
+
+**Étape 5 — Ajouter la note justificative**
+
+Pour chaque article modifié, ajouter dans le champ `notes` de la fiche :
+```
+Prix MM/AAAA — [source marché] : [fourchette observée]. Revient [X]€, [Y]€ = x[Z]. [Justification courte].
+```
+Exemple : `Prix 06/2026 — Lampes upcycling fer à repasser : 90-160€ (rouspette.com). Revient 35€, 95€ = x2,71. Upcycling vintage validé par des créateurs professionnels à ces prix.`
+
+### Session d'optimisation du 29 juin 2026 (journée)
+
+50 articles mis à jour en session interactive. Résultat avant/après :
+
+| Niveau | Avant | Après journée |
+|---|---|---|
+| Danger (< 2×) | 2 | 0 |
+| Trop bas (2×–2,5×) | 14 | 0 |
+| Limite (2,5×–3×) | 13 | 11 |
+| OK (≥ 3×) | 95 | 121 |
+
+Articles corrigés (groupes principaux) :
+- **Lampes upcycling** (6) : +10€ à +15€ chacune — marché validé 50-160€
+- **Lampes limites** (8) : 25-28€ → 32€ — pieds de lampe, chevet, cube béton
+- **Livres pliés** (5) : 12-14€ → 16-18€ — marché Etsy 15-25€
+- **Sculptures métal** (8) : 21-24€ → 28€ — marché 20-45€
+- **Couvertures bébé** (2) : 18-22€ → 28-35€ — marché Etsy 35-80€
+- **Doudous/peluches** (4) : 10-14€ → 12-20€
+- **Écharpes/châle** (3) : 12-21€ → 16-28€
+- **Urgences** (2) : cadre lapin 8→22€, paniers crochet 7→18€
+- **Beauté/accessoires** (6) : lingettes, éponges, brûle-parfum, pochette
+- **Boules Noël crochet** (1) : 4→5€ — marché 3-8€ (multicolores justifient le premium)
+- **Ensembles marguerites** (3) : 25-28€ → 28-32€
+- **Ensemble écharpe+bonnet enfant** (1) : 12→18€ — marché 18-32€ pour 2 pièces
+
+Noms corrigés au passage :
+- "Lot 12 éponges écologiques crochet fruits" → "Éponge écologique crochet fruit" (vendue à l'unité)
+
+### Analyse exhaustive de nuit du 29 juin 2026 (autonome)
+
+Analyse complète des 132 articles non vendus, sans intervention de l'utilisatrice. **15 prix supplémentaires ajustés à la hausse** + **notes de justification ajoutées sur tous les articles sans exception** (103 notes en 2 passes).
+
+État final après les deux sessions :
+
+| Niveau | Avant tout | Après tout |
+|---|---|---|
+| Danger (< 2×) | 2 | 0 |
+| Trop bas (2×–2,5×) | 14 | 0 |
+| Limite (2,5×–3×) | 13 | 11 |
+| OK (≥ 3×) | 95 | 121 |
+| **Avec note de justification** | **0** | **132** |
+
+Augmentations de la session nuit (recherche marché effectuée pour chaque groupe) :
+
+| Article | Avant | Après | Source marché |
+|---|---|---|---|
+| BO petite argile polymère | 8€ | 10€ | Etsy France (ateliermymy.com) : 10-18€ |
+| BO moyenne argile polymère | 10€ | 12€ | Etsy France : 12-20€ |
+| BO grande argile polymère | 12€ | 14€ | Etsy France : 14-25€ |
+| Boucles d'oreilles origami | 8€ | 10€ | Un Grand Marché : 10-32€ |
+| BO grues origami | 10€ | 12€ | Un Grand Marché : 10-32€ |
+| Bracelet Miyuki rose/violet | 12€ | 15€ | Etsy France : 15-35€ |
+| Bracelet Miyuki rouge/gris | 18€ | 20€ | Etsy France : 18-35€ |
+| Hochet lapin bois + crochet | 10€ | 15€ | Un Grand Marché : 18€ (creas d'ioyan) |
+| Sac macramé panda | 18€ | 22€ | Etsy France : 22-45€ |
+| Sac à dos crochet | 25€ | 28€ | Etsy France : 30-60€ (prudent) |
+| Chouchous bruns/rouges | 2€ | 3€ | Un Grand Marché : 3-6€ |
+| Chouchous perles multicolores | 3€ | 4€ | Marché créateurs : 4-8€ |
+| Barrette crochet fleurs | 3€ | 5€ | Etsy France : 4-10€ |
+| Lot sacs à savon (unité) | 3€ | 5€ | ileli.fr : 10€ / lasavonnerie… : 8€ (prudent) |
+| Couverture bébé granny squares 50x100cm | 22€ | 35€ | Etsy France : 35-65€ (très sous-évalué) |
+
+**Aucun article abaissé** — après analyse, aucun article n'était surcoté pour son marché artisanal.
+
+Notes ajoutées sur tous les articles restants (sans changement de prix) : sculptures métal, lampes/lanternes, livres pliés, doudous, couvertures, châles, écharpes, bijoux résine, sacs crochet, accessoires, beauté, déco maison, etc. — tous avec source marché et multiplicateur.
+
+---
+
 ## Fonctionnalités livrées (historique)
 
 - **Marchés & événements** (`/evenements`, `/evenements/[lieu_id]`) — bilan par lieu, enregistrement d'événements avec frais, rattachement automatique des ventes par date+lieu
@@ -395,3 +538,4 @@ Supprimer le fichier après usage (ne jamais le committer).
 - **Guide refondu** — toutes les fonctionnalités documentées, visible sur mobile
 - **Sous-catégorie visible sur les cartes produit** — badge affiché directement sans ouvrir "Détails"
 - **Édition inline sur la fiche produit** — `FicheEditable.tsx` : cliquer sur n'importe quelle valeur (nom, prix, quantité, état, notes, fournisseur) pour la modifier directement sans naviguer vers `/modifier`
+- **Optimisation des prix** (29 juin 2026) — analyse exhaustive des 132 articles via skill `/optimiser-prix` : 65 prix ajustés à la hausse sur 2 sessions (journée + nuit autonome), notes de justification ajoutées sur 100% des articles avec source marché et multiplicateur
